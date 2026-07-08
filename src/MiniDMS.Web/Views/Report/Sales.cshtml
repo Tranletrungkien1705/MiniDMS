@@ -1,0 +1,120 @@
+@using MiniDMS.Models.ViewModels
+@model IEnumerable<SalesReportRow>
+@{
+    ViewData["Title"] = "Báo cáo Doanh thu";
+    var totalRevenue  = Model.Sum(r => r.Revenue);
+    var totalOrders   = Model.Sum(r => r.OrderCount);
+    var fromVal       = ViewBag.From  as string ?? "";
+    var toVal         = ViewBag.To    as string ?? "";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold">
+            <i class="bi bi-bar-chart-line me-2"></i>Doanh thu theo kỳ
+        </h5>
+        <small class="text-muted">Thống kê doanh thu đơn hàng đã xác nhận</small>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form asp-action="Sales" method="get" class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label mb-1 small">Từ ngày</label>
+                <input type="date" name="from" class="form-control form-control-sm" value="@fromVal" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-1 small">Đến ngày</label>
+                <input type="date" name="to" class="form-control form-control-sm" value="@toVal" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-funnel me-1"></i>Xem báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Tổng doanh thu</div>
+                <div class="fw-bold fs-4 font-monospace text-primary">
+                    @totalRevenue.ToString("N0") ₫
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Tổng đơn hàng</div>
+                <div class="fw-bold fs-4 font-monospace">@totalOrders.ToString("N0")</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Doanh thu trung bình / đơn</div>
+                <div class="fw-bold fs-4 font-monospace text-success">
+                    @(totalOrders > 0 ? (totalRevenue / totalOrders).ToString("N0") : "0") ₫
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Kỳ</th>
+                    <th class="text-end">Số đơn</th>
+                    <th class="text-end">Doanh thu (₫)</th>
+                    <th>Tỷ lệ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            <i class="bi bi-bar-chart fs-4 d-block mb-2"></i>
+                            Chọn khoảng thời gian để xem báo cáo
+                        </td>
+                    </tr>
+                }
+                @foreach (var row in Model)
+                {
+                    var pct = totalRevenue > 0 ? (int)(row.Revenue / totalRevenue * 100) : 0;
+                    <tr>
+                        <td class="fw-semibold">@row.Period</td>
+                        <td class="text-end font-monospace">@row.OrderCount.ToString("N0")</td>
+                        <td class="text-end font-monospace fw-semibold">@row.Revenue.ToString("N0")</td>
+                        <td style="min-width:140px">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:6px">
+                                    <div class="progress-bar bg-primary" style="width:@pct%"></div>
+                                </div>
+                                <span class="small text-muted font-monospace" style="width:32px">@pct%</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            @if (Model.Any())
+            {
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td>Tổng</td>
+                        <td class="text-end font-monospace">@totalOrders.ToString("N0")</td>
+                        <td class="text-end font-monospace text-primary">@totalRevenue.ToString("N0")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+</div>

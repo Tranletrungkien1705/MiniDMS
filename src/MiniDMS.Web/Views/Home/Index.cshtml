@@ -1,0 +1,96 @@
+@using MiniDMS.Services
+@model DashboardSummary
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="text-muted mb-1" style="font-size:12px;text-transform:uppercase;letter-spacing:1px">Sản phẩm</div>
+                <div style="font-size:28px;font-weight:700">@Model.TotalProducts</div>
+                <div class="text-muted" style="font-size:12px">SKU đang hoạt động</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100" style="border-left:4px solid #EF4444">
+            <div class="card-body">
+                <div class="text-muted mb-1" style="font-size:12px;text-transform:uppercase;letter-spacing:1px">Tồn kho thấp</div>
+                <div style="font-size:28px;font-weight:700;color:#EF4444">@Model.LowStockCount</div>
+                <div class="text-muted" style="font-size:12px">SKU cần nhập thêm</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100" style="border-left:4px solid #10B981">
+            <div class="card-body">
+                <div class="text-muted mb-1" style="font-size:12px;text-transform:uppercase;letter-spacing:1px">Doanh thu hôm nay</div>
+                <div style="font-size:22px;font-weight:700;color:#10B981">@Model.TodayRevenue.ToString("N0") ₫</div>
+                <div class="text-muted" style="font-size:12px">Đơn đã xác nhận</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100" style="border-left:4px solid #F59E0B">
+            <div class="card-body">
+                <div class="text-muted mb-1" style="font-size:12px;text-transform:uppercase;letter-spacing:1px">Đơn chờ xử lý</div>
+                <div style="font-size:28px;font-weight:700;color:#F59E0B">@Model.PendingOrders</div>
+                <div class="text-muted" style="font-size:12px">Cần xác nhận</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly sales chart -->
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="fw-600 mb-3">Doanh thu 6 tháng gần nhất</h6>
+                <canvas id="salesChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="fw-600 mb-3">Thao tác nhanh</h6>
+                <div class="d-grid gap-2">
+                    <a href="/Stock/In"     class="btn btn-primary"><i class="bi bi-box-arrow-in-down me-2"></i>Nhập kho</a>
+                    <a href="/Stock/Out"    class="btn btn-outline-primary"><i class="bi bi-box-arrow-up me-2"></i>Xuất kho</a>
+                    <a href="/Stock/Import" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel me-2"></i>Import Excel</a>
+                    <a href="/Order"        class="btn btn-outline-secondary"><i class="bi bi-cart3 me-2"></i>Tạo đơn hàng</a>
+                    <a href="/Report/Debt"  class="btn btn-outline-danger"><i class="bi bi-cash-stack me-2"></i>Báo cáo công nợ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const ctx = document.getElementById('salesChart');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [@Html.Raw(string.Join(",", Model.MonthlySales.Select(m => $"'{m.Label}'")))],
+        datasets: [{
+            label: 'Doanh thu (₫)',
+            data: [@string.Join(",", Model.MonthlySales.Select(m => m.Value))],
+            backgroundColor: 'rgba(232,98,10,0.75)',
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { ticks: { callback: v => (v/1000000).toFixed(1) + 'M' } }
+        }
+    }
+});
+</script>
+}

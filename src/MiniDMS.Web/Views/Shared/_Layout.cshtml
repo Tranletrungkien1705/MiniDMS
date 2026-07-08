@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — MiniDMS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <style>
+        :root { --accent: #E8620A; --sidebar-bg: #12192D; }
+        body { font-size: 14px; background: #F5F7FA; }
+        .sidebar { width: 220px; min-height: 100vh; background: var(--sidebar-bg); flex-shrink: 0; }
+        .sidebar .brand { color: #fff; font-weight: 700; font-size: 18px; padding: 20px 18px 10px; border-bottom: 1px solid rgba(255,255,255,.1); }
+        .sidebar .brand span { color: var(--accent); }
+        .sidebar .nav-link { color: #9AAEC8; padding: 9px 18px; display: flex; align-items: center; gap: 9px; border-radius: 0; transition: all .15s; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(232,98,10,.18); border-left: 3px solid var(--accent); }
+        .sidebar .nav-section { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #4A6080; padding: 14px 18px 4px; }
+        .main-content { flex: 1; overflow-x: hidden; }
+        .topbar { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 10px 24px; }
+        .content-area { padding: 24px; }
+        .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); }
+        .btn-primary:hover { background: #c8540a; border-color: #c8540a; }
+        .badge-role { font-size: 11px; padding: 3px 8px; }
+        .table th { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #6B7280; border-bottom: 2px solid #E5E7EB; }
+        .alert-low-stock { background: #FFF3F0; border-left: 3px solid var(--accent); }
+        .stat-card { border-left: 4px solid var(--accent); }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    <!-- Sidebar -->
+    <nav class="sidebar d-flex flex-column">
+        <div class="brand">Mini<span>DMS</span></div>
+        <div class="mt-2">
+            <div class="nav-section">Tổng quan</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+               href="/">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+
+            <div class="nav-section">Kho hàng</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Stock" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+               href="/Stock">
+                <i class="bi bi-box-seam"></i> Tồn kho
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "In" ? "active" : "")"
+               href="/Stock/In">
+                <i class="bi bi-box-arrow-in-down"></i> Nhập kho
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Out" ? "active" : "")"
+               href="/Stock/Out">
+                <i class="bi bi-box-arrow-up"></i> Xuất kho
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Import" ? "active" : "")"
+               href="/Stock/Import">
+                <i class="bi bi-file-earmark-excel"></i> Import Excel
+            </a>
+
+            <div class="nav-section">Bán hàng</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "active" : "")"
+               href="/Product">
+                <i class="bi bi-tags"></i> Sản phẩm
+            </a>
+            <a class="nav-link" href="/Order">
+                <i class="bi bi-cart3"></i> Đơn hàng
+            </a>
+            <a class="nav-link" href="/Order/Customers">
+                <i class="bi bi-people"></i> Khách hàng
+            </a>
+
+            <div class="nav-section">Báo cáo</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Debt" ? "active" : "")"
+               href="/Report/Debt">
+                <i class="bi bi-cash-stack"></i> Công nợ
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")"
+               href="/Report/Sales">
+                <i class="bi bi-bar-chart"></i> Doanh thu
+            </a>
+        </div>
+
+        <div class="mt-auto p-3 border-top" style="border-color:rgba(255,255,255,.1)!important">
+            <div class="text-muted" style="font-size:11px;color:#6B7280!important">
+                @User.Identity?.Name
+                @foreach (var role in new[]{"Admin","Warehouse","Sales","Accounting"})
+                {
+                    if (User.IsInRole(role))
+                    { <span class="badge ms-1" style="background:rgba(232,98,10,.2);color:#E8620A">@role</span> }
+                }
+            </div>
+            <form method="post" action="/Account/Logout" class="mt-2">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm w-100" style="background:rgba(255,255,255,.07);color:#9AAEC8;border:none">
+                    <i class="bi bi-box-arrow-left"></i> Đăng xuất
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="main-content">
+        <div class="topbar d-flex align-items-center justify-content-between">
+            <h6 class="mb-0 fw-600">@ViewData["Title"]</h6>
+        </div>
+        <div class="content-area">
+            @if (TempData["Success"] != null)
+            { <div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div> }
+            @if (TempData["Error"] != null)
+            { <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div> }
+
+            @RenderBody()
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

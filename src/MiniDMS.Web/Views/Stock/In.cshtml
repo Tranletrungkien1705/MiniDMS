@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Nhập Kho";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold">
+            <i class="bi bi-box-arrow-in-down text-success me-2"></i>Nhập Kho
+        </h5>
+        <small class="text-muted">Thêm hàng vào tồn kho</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form asp-action="In" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Sản phẩm <span class="text-danger">*</span>
+                        </label>
+                        <select name="productId" class="form-select" asp-items="@(ViewBag.Products as Microsoft.AspNetCore.Mvc.Rendering.SelectList)" required>
+                            <option value="">-- Chọn sản phẩm --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Số lượng <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" name="quantity" class="form-control"
+                               min="1" step="1" required placeholder="0" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số phiếu / PO</label>
+                        <input type="text" name="refNo" class="form-control"
+                               placeholder="VD: PO-2024-001" maxlength="50" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ghi chú</label>
+                        <textarea name="note" class="form-control" rows="3"
+                                  placeholder="Nhập kho từ nhà cung cấp..."></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i>Xác nhận Nhập Kho
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

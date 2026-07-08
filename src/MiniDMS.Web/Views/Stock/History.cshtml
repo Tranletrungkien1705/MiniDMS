@@ -1,0 +1,107 @@
+@using MiniDMS.Models.Entities
+@model IEnumerable<StockTransaction>
+@{
+    ViewData["Title"] = "Lịch sử Xuất-Nhập";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold">
+            <i class="bi bi-clock-history me-2"></i>Lịch sử Xuất-Nhập
+        </h5>
+        <small class="text-muted">@Model.Count() giao dịch</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại Tồn Kho
+    </a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body p-3">
+        <form asp-action="History" method="get" class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label mb-1 small">Sản phẩm</label>
+                <select name="productId" class="form-select form-select-sm"
+                        asp-items="@(ViewBag.Products as Microsoft.AspNetCore.Mvc.Rendering.SelectList)">
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-1 small">Từ ngày</label>
+                <input type="date" name="from" class="form-control form-control-sm"
+                       value="@ViewBag.From" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-1 small">Đến ngày</label>
+                <input type="date" name="to" class="form-control form-control-sm"
+                       value="@ViewBag.To" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-funnel me-1"></i>Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Sản phẩm</th>
+                    <th>Loại</th>
+                    <th class="text-end">Số lượng</th>
+                    <th>Số phiếu</th>
+                    <th>Người thực hiện</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            Không có giao dịch nào
+                        </td>
+                    </tr>
+                }
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td class="font-monospace small text-muted">
+                            @t.CreatedAt.ToString("dd/MM/yy HH:mm")
+                        </td>
+                        <td>
+                            <div class="fw-semibold small">@t.Product?.Name</div>
+                            <div class="font-monospace text-muted" style="font-size:.75rem">@t.Product?.SKU</div>
+                        </td>
+                        <td>
+                            @switch (t.Type)
+                            {
+                                case StockTransactionType.In:
+                                    <span class="badge bg-success">Nhập</span>
+                                    break;
+                                case StockTransactionType.Out:
+                                    <span class="badge bg-warning text-dark">Xuất</span>
+                                    break;
+                                case StockTransactionType.Adjust:
+                                    <span class="badge bg-info text-dark">Điều chỉnh</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="text-end fw-semibold font-monospace">
+                            @t.Quantity.ToString("N0")
+                        </td>
+                        <td class="font-monospace small">@t.RefNo</td>
+                        <td class="small text-muted">@t.CreatedBy</td>
+                        <td class="small text-muted">@t.Note</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
