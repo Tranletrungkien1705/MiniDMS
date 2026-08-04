@@ -8,7 +8,7 @@
 ## Bước 1 — Clone & chuẩn bị
 
 ```bash
-git clone https://github.com/Tranletrungkien17/MiniDMS.git
+git clone https://github.com/Tranletrungkien1705/MiniDMS.git
 cd MiniDMS
 ```
 

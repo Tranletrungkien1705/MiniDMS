@@ -80,7 +80,7 @@ Mỗi Controller/Action gắn `[Authorize(Roles = "...")]`. Không có quyền �
 
 ### Bước 1 — Clone
 ```bash
-git clone https://github.com/Tranletrungkien17/MiniDMS.git
+git clone https://github.com/Tranletrungkien1705/MiniDMS.git
 cd MiniDMS
 ```
 
