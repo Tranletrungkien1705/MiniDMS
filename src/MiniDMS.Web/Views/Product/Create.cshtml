@@ -35,7 +35,7 @@
                             </label>
                             <input asp-for="SKU" class="form-control font-monospace"
                                    placeholder="VD: TS-001" maxlength="30" required
-                                   @(isEdit ? "readonly" : "") />
+                                   readonly="@(isEdit ? "readonly" : null)" />
                             <span asp-validation-for="SKU" class="text-danger small"></span>
                             @if (isEdit)
                             {

@@ -82,13 +82,13 @@
                         <td>
                             @switch (t.Type)
                             {
-                                case StockTransactionType.In:
+                                case TransactionType.In:
                                     <span class="badge bg-success">Nhập</span>
                                     break;
-                                case StockTransactionType.Out:
+                                case TransactionType.Out:
                                     <span class="badge bg-warning text-dark">Xuất</span>
                                     break;
-                                case StockTransactionType.Adjust:
+                                case TransactionType.Adjust:
                                     <span class="badge bg-info text-dark">Điều chỉnh</span>
                                     break;
                             }

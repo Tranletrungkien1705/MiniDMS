@@ -12,6 +12,7 @@ public class DbSeeder(
 
     public async Task SeedAsync()
     {
+        await db.Database.EnsureCreatedAsync(); // [local run] tao schema tu model (khong can migration)
         // Roles
         foreach (var role in Roles)
             if (!await roleMgr.RoleExistsAsync(role))

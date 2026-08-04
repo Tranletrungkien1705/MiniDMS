@@ -12,7 +12,8 @@ public class StockController(IStockService stock, IProductService products, IExc
     {
         var balances = await stock.GetBalancesAsync(sku, categoryId);
         ViewBag.Categories = await products.GetCategoriesAsync();
-        ViewBag.Filter = new { sku, categoryId };
+        ViewBag.FilterSku = sku;
+        ViewBag.FilterCategoryId = categoryId;
         return View(balances);
     }
 

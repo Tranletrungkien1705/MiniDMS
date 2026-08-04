@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using MiniDMS.Data;
 using MiniDMS.Models.Entities;
+using MiniDMS.Models.ViewModels;
 
 namespace MiniDMS.Services;
 
 public interface IReportService
 {
     Task<List<DebtRow>> GetDebtReportAsync(DateTime? from, DateTime? to);
-    Task<List<SalesRow>> GetSalesReportAsync(DateTime from, DateTime to);
+    Task<List<SalesReportRow>> GetSalesReportAsync(DateTime from, DateTime to);
     Task<DashboardSummary> GetDashboardAsync();
 }
 
@@ -47,13 +48,18 @@ public class ReportService(AppDbContext db) : IReportService
             .ToList();
     }
 
-    public async Task<List<SalesRow>> GetSalesReportAsync(DateTime from, DateTime to) =>
-        await db.Orders
-            .Include(o => o.Customer)
+    public async Task<List<SalesReportRow>> GetSalesReportAsync(DateTime from, DateTime to)
+    {
+        var grouped = await db.Orders
             .Where(o => o.OrderDate >= from && o.OrderDate <= to && o.Status != OrderStatus.Cancelled)
-            .OrderByDescending(o => o.OrderDate)
-            .Select(o => new SalesRow(o.OrderNo, o.Customer.Name, o.OrderDate, o.TotalAmount, o.Status.ToString()))
+            .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count(), Revenue = g.Sum(o => o.TotalAmount) })
             .ToListAsync();
+        return grouped
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .Select(x => new SalesReportRow { Period = $"{x.Month:D2}/{x.Year}", OrderCount = x.Count, Revenue = x.Revenue })
+            .ToList();
+    }
 
     public async Task<DashboardSummary> GetDashboardAsync()
     {
