@@ -1,0 +1,23 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    environment:
+      # Ghi de connection string LocalDB (Windows) -> SQL Server sidecar (Linux)
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=MiniDMS;User Id=sa;Password=Dev_Pass_123!;TrustServerCertificate=true;MultipleActiveResultSets=true"
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
+      ASPNETCORE_ENVIRONMENT: "Development"
+    networks: [minidms]
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Dev_Pass_123!"
+      MSSQL_PID: "Developer"
+    networks: [minidms]
+
+networks:
+  minidms:
