@@ -28,12 +28,14 @@ public class ReportService(AppDbContext db) : IReportService
     {
         var q = db.Orders
             .Include(o => o.Customer)
-            .Where(o => o.Status != OrderStatus.Cancelled && o.DebtAmount > 0);
+            .Where(o => o.Status != OrderStatus.Cancelled);
 
         if (from.HasValue) q = q.Where(o => o.OrderDate >= from.Value);
         if (to.HasValue)   q = q.Where(o => o.OrderDate <= to.Value);
 
-        var orders = await q.ToListAsync();
+        // DebtAmount là property tính toán (=> TotalAmount - PaidAmount), không map được vào SQL
+        // → lọc ở client sau khi materialize (dịch server-side sẽ ném "member unmapped").
+        var orders = (await q.ToListAsync()).Where(o => o.DebtAmount > 0).ToList();
 
         return orders
             .GroupBy(o => o.Customer)
