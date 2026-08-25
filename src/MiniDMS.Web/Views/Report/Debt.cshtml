@@ -1,8 +1,8 @@
-@using MiniDMS.Models.Entities
-@model IEnumerable<Customer>
+@using MiniDMS.Services
+@model IEnumerable<DebtRow>
 @{
     ViewData["Title"] = "Báo cáo Công nợ";
-    var totalDebt = Model.Sum(c => c.DebtBalance);
+    var totalDebt = Model.Sum(r => r.Debt);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,7 +10,7 @@
         <h5 class="mb-0 fw-bold">
             <i class="bi bi-credit-card me-2"></i>Công nợ Khách hàng
         </h5>
-        <small class="text-muted">@Model.Count() khách hàng có giao dịch</small>
+        <small class="text-muted">@Model.Count() khách hàng có công nợ</small>
     </div>
     <a asp-action="ExportDebt" class="btn btn-success btn-sm">
         <i class="bi bi-file-earmark-excel me-1"></i>Xuất Excel
@@ -24,7 +24,7 @@
         <div>
             Tổng công nợ hiện tại:
             <strong class="ms-1">@totalDebt.ToString("N0") ₫</strong>
-            <span class="text-muted ms-2">(@Model.Count(c => c.DebtBalance > 0) khách còn nợ)</span>
+            <span class="text-muted ms-2">(@Model.Count(r => r.Debt > 0) khách còn nợ)</span>
         </div>
     </div>
 }
@@ -43,6 +43,8 @@ else
                 <tr>
                     <th>Mã KH</th>
                     <th>Tên khách hàng</th>
+                    <th class="text-end">Tổng bán (₫)</th>
+                    <th class="text-end">Đã trả (₫)</th>
                     <th class="text-end">Công nợ (₫)</th>
                     <th class="text-center">Trạng thái</th>
                 </tr>
@@ -51,22 +53,24 @@ else
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">
+                        <td colspan="6" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                             Không có dữ liệu
                         </td>
                     </tr>
                 }
-                @foreach (var c in Model.OrderByDescending(x => x.DebtBalance))
+                @foreach (var r in Model.OrderByDescending(x => x.Debt))
                 {
                     <tr>
-                        <td class="font-monospace fw-semibold small">@c.Code</td>
-                        <td class="fw-semibold">@c.Name</td>
-                        <td class="text-end font-monospace @(c.DebtBalance > 0 ? "text-danger fw-bold" : "text-muted")">
-                            @c.DebtBalance.ToString("N0")
+                        <td class="font-monospace fw-semibold small">@r.CustomerCode</td>
+                        <td class="fw-semibold">@r.CustomerName</td>
+                        <td class="text-end font-monospace text-muted">@r.TotalAmount.ToString("N0")</td>
+                        <td class="text-end font-monospace text-muted">@r.PaidAmount.ToString("N0")</td>
+                        <td class="text-end font-monospace @(r.Debt > 0 ? "text-danger fw-bold" : "text-muted")">
+                            @r.Debt.ToString("N0")
                         </td>
                         <td class="text-center">
-                            @if (c.DebtBalance > 0)
+                            @if (r.Debt > 0)
                             {
                                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Còn nợ</span>
                             }
@@ -82,7 +86,7 @@ else
             {
                 <tfoot class="table-light fw-bold">
                     <tr>
-                        <td colspan="2" class="text-end">Tổng cộng:</td>
+                        <td colspan="4" class="text-end">Tổng cộng:</td>
                         <td class="text-end font-monospace text-danger">@totalDebt.ToString("N0")</td>
                         <td></td>
                     </tr>
