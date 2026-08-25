@@ -50,11 +50,15 @@ public class ReportService(AppDbContext db) : IReportService
 
     public async Task<List<SalesReportRow>> GetSalesReportAsync(DateTime from, DateTime to)
     {
-        var grouped = await db.Orders
+        // SQLite không SUM(decimal) server-side → lấy cột rồi group/sum ở client.
+        var rows = await db.Orders
             .Where(o => o.OrderDate >= from && o.OrderDate <= to && o.Status != OrderStatus.Cancelled)
-            .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count(), Revenue = g.Sum(o => o.TotalAmount) })
+            .Select(o => new { o.OrderDate.Year, o.OrderDate.Month, o.TotalAmount })
             .ToListAsync();
+        var grouped = rows
+            .GroupBy(o => new { o.Year, o.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count(), Revenue = g.Sum(o => o.TotalAmount) })
+            .ToList();
         return grouped
             .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .Select(x => new SalesReportRow { Period = $"{x.Month:D2}/{x.Year}", OrderCount = x.Count, Revenue = x.Revenue })
@@ -68,9 +72,10 @@ public class ReportService(AppDbContext db) : IReportService
 
         var totalProducts = await db.Products.CountAsync(p => p.IsActive);
         var pendingOrders = await db.Orders.CountAsync(o => o.Status == OrderStatus.Confirmed);
-        var todayRevenue = await db.Orders
+        var todayRevenue = (await db.Orders
             .Where(o => o.OrderDate.Date == today && o.Status != OrderStatus.Cancelled)
-            .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+            .Select(o => o.TotalAmount)
+            .ToListAsync()).Sum();
 
         // Low stock: compute via grouped transactions
         var allBalances = await db.StockTransactions
@@ -95,9 +100,10 @@ public class ReportService(AppDbContext db) : IReportService
             var d = today.AddMonths(-m);
             var ms = new DateTime(d.Year, d.Month, 1);
             var me = ms.AddMonths(1);
-            var total = await db.Orders
+            var total = (await db.Orders
                 .Where(o => o.OrderDate >= ms && o.OrderDate < me && o.Status != OrderStatus.Cancelled)
-                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+                .Select(o => o.TotalAmount)
+                .ToListAsync()).Sum();
             monthlySales.Add(($"{d:MM/yyyy}", total));
         }
 
