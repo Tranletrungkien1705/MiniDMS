@@ -1,0 +1,9 @@
+# Deploy MiniDMS lên Render (Docker, SQLite). Free ngủ 15' -> UptimeRobot ping /healthz.
+services:
+  - type: web
+    name: minidms
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    plan: free
+    autoDeploy: true

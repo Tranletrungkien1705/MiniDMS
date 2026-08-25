@@ -4,9 +4,11 @@ using MiniDMS.Data;
 using MiniDMS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+// Cloud host (Render/Koyeb) cấp cổng qua biến PORT; local mặc định 8080
+builder.WebHost.UseUrls($"http://0.0.0.0:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
 
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    o.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(o =>
 {
@@ -32,7 +34,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<DbSeeder>();
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -48,12 +50,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapGet("/healthz", () => "ok");
 
 app.Run();
