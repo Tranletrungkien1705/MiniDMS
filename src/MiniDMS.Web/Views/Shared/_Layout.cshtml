@@ -67,6 +67,14 @@
                href="/Product">
                 <i class="bi bi-tags"></i> Sản phẩm
             </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" && ViewContext.RouteData.Values["action"]?.ToString() != "Customers" ? "active" : "")"
+               href="/Order">
+                <i class="bi bi-cart3"></i> Đơn hàng
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Customers" ? "active" : "")"
+               href="/Order/Customers">
+                <i class="bi bi-people"></i> Khách hàng
+            </a>
 
             <div class="nav-section">Báo cáo</div>
             <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Debt" ? "active" : "")"

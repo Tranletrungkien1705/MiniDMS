@@ -43,6 +43,29 @@ public class DbSeeder(
             );
             await db.SaveChangesAsync();
         }
+
+        // Seed khách hàng demo
+        if (!db.Customers.Any())
+        {
+            db.Customers.AddRange(
+                new Customer { Code = "KH001", Name = "Cửa hàng Minh Anh",   Phone = "0901234567", Address = "12 Lê Lợi, Q.1, TP.HCM" },
+                new Customer { Code = "KH002", Name = "Shop thời trang Hà",   Phone = "0912345678", Address = "45 Nguyễn Huệ, Q.1, TP.HCM" },
+                new Customer { Code = "KH003", Name = "Đại lý Phương Nam",    Phone = "0923456789", Address = "88 CMT8, Q.3, TP.HCM" }
+            );
+            await db.SaveChangesAsync();
+        }
+
+        // Nhập tồn kho đầu kỳ để tạo/xác nhận đơn hàng được (xác nhận sẽ trừ kho)
+        if (!db.StockTransactions.Any())
+        {
+            foreach (var p in db.Products.ToList())
+                db.StockTransactions.Add(new StockTransaction
+                {
+                    ProductId = p.Id, Type = TransactionType.In, Quantity = 100,
+                    Note = "Tồn đầu kỳ", RefNo = "INIT", CreatedBy = "seed"
+                });
+            await db.SaveChangesAsync();
+        }
     }
 
     private async Task EnsureUser(string email, string password, string role)

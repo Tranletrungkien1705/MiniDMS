@@ -1,0 +1,115 @@
+@using MiniDMS.Models.Entities
+@model Order
+@{
+    ViewData["Title"] = $"Đơn {Model.OrderNo}";
+    bool canManage = User.IsInRole("Admin") || User.IsInRole("Sales");
+    bool canPay = canManage || User.IsInRole("Accounting");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>@Model.OrderNo</h5>
+        <small class="text-muted">Tạo @Model.OrderDate.ToString("dd/MM/yyyy HH:mm") bởi @Model.CreatedBy</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Danh sách</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small text-uppercase mb-1">Khách hàng</div>
+            <div class="fw-bold">@Model.Customer.Name</div>
+            <div class="small text-muted font-monospace">@Model.Customer.Code</div>
+            @if (!string.IsNullOrEmpty(Model.Customer.Phone)) { <div class="small"><i class="bi bi-telephone me-1"></i>@Model.Customer.Phone</div> }
+            @if (!string.IsNullOrEmpty(Model.Customer.Address)) { <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>@Model.Customer.Address</div> }
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small text-uppercase mb-1">Trạng thái</div>
+            <div class="mb-2">
+                @switch (Model.Status)
+                {
+                    case OrderStatus.Draft: <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fs-6">Nháp</span> break;
+                    case OrderStatus.Confirmed: <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6">Đã xác nhận</span> break;
+                    case OrderStatus.Delivered: <span class="badge bg-success-subtle text-success border border-success-subtle fs-6">Đã giao</span> break;
+                    case OrderStatus.Cancelled: <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6">Đã hủy</span> break;
+                }
+            </div>
+            <div class="text-muted small text-uppercase mb-1">Thanh toán</div>
+            <div>
+                @switch (Model.PaymentStatus)
+                {
+                    case PaymentStatus.Paid: <span class="badge bg-success-subtle text-success border border-success-subtle">Đã thanh toán</span> break;
+                    case PaymentStatus.PartialPaid: <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Thanh toán một phần</span> break;
+                    default: <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Chưa thanh toán</span> break;
+                }
+            </div>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="d-flex justify-content-between"><span class="text-muted">Tổng tiền</span><span class="font-monospace fw-semibold">@Model.TotalAmount.ToString("N0") ₫</span></div>
+            <div class="d-flex justify-content-between"><span class="text-muted">Đã trả</span><span class="font-monospace text-success">@Model.PaidAmount.ToString("N0") ₫</span></div>
+            <hr class="my-2" />
+            <div class="d-flex justify-content-between"><span class="fw-bold">Còn nợ</span><span class="font-monospace fw-bold @(Model.DebtAmount > 0 ? "text-danger" : "text-muted")">@Model.DebtAmount.ToString("N0") ₫</span></div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold"><i class="bi bi-list-ul me-1"></i>Chi tiết sản phẩm</div>
+    <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+            <thead class="table-light">
+                <tr><th>Sản phẩm</th><th class="text-center">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var l in Model.Lines)
+                {
+                    <tr>
+                        <td><div class="fw-semibold">@l.Product?.Name</div><small class="text-muted font-monospace">@l.Product?.SKU</small></td>
+                        <td class="text-center">@l.Quantity</td>
+                        <td class="text-end font-monospace">@l.UnitPrice.ToString("N0")</td>
+                        <td class="text-end font-monospace">@l.LineTotal.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="table-light fw-bold"><tr><td colspan="3" class="text-end">Tổng cộng:</td><td class="text-end font-monospace text-primary">@Model.TotalAmount.ToString("N0")</td></tr></tfoot>
+        </table>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Note))
+{
+    <div class="alert alert-light border"><i class="bi bi-sticky me-1"></i><strong>Ghi chú:</strong> @Model.Note</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body d-flex flex-wrap gap-2 align-items-center">
+        @if (canManage && Model.Status == OrderStatus.Draft)
+        {
+            <form asp-action="Confirm" asp-route-id="@Model.Id" method="post" class="d-inline">@Html.AntiForgeryToken()
+                <button class="btn btn-primary btn-sm"><i class="bi bi-check-circle me-1"></i>Xác nhận (trừ kho)</button></form>
+        }
+        @if (canManage && Model.Status == OrderStatus.Confirmed)
+        {
+            <form asp-action="Deliver" asp-route-id="@Model.Id" method="post" class="d-inline">@Html.AntiForgeryToken()
+                <button class="btn btn-success btn-sm"><i class="bi bi-truck me-1"></i>Đánh dấu đã giao</button></form>
+        }
+        @if (canManage && Model.Status != OrderStatus.Delivered && Model.Status != OrderStatus.Cancelled)
+        {
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-inline"
+                  onsubmit="return confirm('Hủy đơn hàng này?');">@Html.AntiForgeryToken()
+                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle me-1"></i>Hủy đơn</button></form>
+        }
+        @if (canPay && Model.DebtAmount > 0 && Model.Status != OrderStatus.Cancelled)
+        {
+            <form asp-action="Pay" asp-route-id="@Model.Id" method="post" class="d-inline-flex gap-2 align-items-center ms-auto">@Html.AntiForgeryToken()
+                <input type="number" name="amount" class="form-control form-control-sm" style="width:150px"
+                       placeholder="Số tiền" min="1" max="@Model.DebtAmount" value="@Model.DebtAmount" />
+                <button class="btn btn-warning btn-sm text-dark"><i class="bi bi-cash-coin me-1"></i>Ghi thanh toán</button>
+            </form>
+        }
+    </div>
+</div>

@@ -1,0 +1,102 @@
+@using MiniDMS.Models.Entities
+@{
+    ViewData["Title"] = "Tạo đơn hàng";
+    var customers = ViewBag.Customers as List<Customer> ?? new();
+    var prods = ViewBag.Products as List<Product> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-cart-plus me-2"></i>Tạo đơn hàng</h5>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Quay lại</a>
+</div>
+
+<div asp-validation-summary="All" class="alert alert-danger py-2 px-3" style="font-size:13px"></div>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Khách hàng <span class="text-danger">*</span></label>
+            <select name="customerId" class="form-select" required>
+                <option value="0">— Chọn khách hàng —</option>
+                @foreach (var c in customers)
+                {
+                    <option value="@c.Id">@c.Code — @c.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Ghi chú</label>
+            <input name="note" class="form-control" placeholder="Ghi chú đơn (không bắt buộc)" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white fw-semibold"><i class="bi bi-list-ul me-1"></i>Dòng sản phẩm — nhập số lượng cần bán</div>
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th style="width:140px" class="text-center">Số lượng</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (prods.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">Chưa có sản phẩm hoạt động. Hãy thêm sản phẩm trước.</td></tr>
+                    }
+                    @foreach (var p in prods)
+                    {
+                        <tr>
+                            <td>
+                                <input type="hidden" name="productId" value="@p.Id" />
+                                <div class="fw-semibold">@p.Name</div>
+                                <small class="text-muted font-monospace">@p.SKU · @p.Unit</small>
+                            </td>
+                            <td class="text-end font-monospace">@p.SalePrice.ToString("N0")</td>
+                            <td class="text-center">
+                                <input type="number" name="quantity" value="0" min="0" step="1"
+                                       class="form-control form-control-sm text-center qty"
+                                       data-price="@p.SalePrice" />
+                            </td>
+                            <td class="text-end font-monospace line-total">0</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td colspan="3" class="text-end">Tổng cộng:</td>
+                        <td class="text-end font-monospace fs-6 text-primary" id="grandTotal">0 ₫</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Tạo đơn (Nháp)</button>
+        <a asp-action="Index" class="btn btn-light">Hủy</a>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+  const fmt = n => n.toLocaleString('vi-VN');
+  function recalc() {
+    let grand = 0;
+    document.querySelectorAll('.qty').forEach(q => {
+      const qty = parseInt(q.value) || 0;
+      const price = parseFloat(q.dataset.price) || 0;
+      const total = qty * price;
+      grand += total;
+      q.closest('tr').querySelector('.line-total').textContent = fmt(total);
+    });
+    document.getElementById('grandTotal').textContent = fmt(grand) + ' ₫';
+  }
+  document.querySelectorAll('.qty').forEach(q => q.addEventListener('input', recalc));
+  recalc();
+</script>
+}
