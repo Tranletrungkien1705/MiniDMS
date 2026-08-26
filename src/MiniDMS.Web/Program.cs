@@ -3,12 +3,20 @@ using Microsoft.EntityFrameworkCore;
 using MiniDMS.Data;
 using MiniDMS.Services;
 
+// Npgsql: DateTime (Kind Local/Unspecified) '' timestamp without time zone (khong phai timestamptz)
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 // Cloud host (Render/Koyeb) cấp cổng qua biến PORT; local mặc định 8080
 builder.WebHost.UseUrls($"http://0.0.0.0:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
 
+var conn = Environment.GetEnvironmentVariable("CONNECTION_STRING")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=minidms.db";
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (MiniDMS.Data.DbUtil.IsPostgres(conn)) o.UseNpgsql(MiniDMS.Data.DbUtil.ToNpgsql(conn));
+    else o.UseSqlite(conn);
+});
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(o =>
 {

@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
     protected override void OnModelCreating(ModelBuilder b)
     {
+        if (Database.IsNpgsql()) b.HasDefaultSchema("minidms");
         base.OnModelCreating(b);
 
         b.Entity<Product>(e =>
