@@ -30,6 +30,14 @@ public class Order
     public string? Note { get; set; }
     public string CreatedBy { get; set; } = "";
 
+    // ── Hóa đơn điện tử (tích hợp QinvoiceLite) ──────────────────────
+    public Guid? EInvoiceId { get; set; }          // Id hóa đơn bên QinvoiceLite
+    public string? EInvoiceSeries { get; set; }    // ký hiệu
+    public long? EInvoiceNumber { get; set; }      // số hóa đơn
+    public string? EInvoiceCode { get; set; }      // mã CQT cấp
+    public string? EInvoiceStatus { get; set; }    // Draft/Authorized/...
+    public DateTime? EInvoiceIssuedAt { get; set; }
+
     public Customer Customer { get; set; } = null!;
     public ICollection<OrderLine> Lines { get; set; } = [];
 }

@@ -33,6 +33,9 @@ builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<DbSeeder>();
 
+// Client HĐĐT (QinvoiceLite). Timeout cao cho cold-start Render free.
+builder.Services.AddHttpClient<IQinvoiceClient, QinvoiceClient>(c => c.Timeout = TimeSpan.FromSeconds(120));
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 

@@ -106,6 +106,35 @@ public class OrderController(IOrderService orders, IProductService products) : C
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    // POST /Order/ExportEInvoice/5 — xuất hóa đơn điện tử qua QinvoiceLite
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin,Sales,Accounting")]
+    public async Task<IActionResult> ExportEInvoice(int id, [FromServices] IQinvoiceClient qinvoice)
+    {
+        var order = await orders.GetByIdAsync(id);
+        if (order == null) return NotFound();
+        if (order.EInvoiceId != null)
+        {
+            TempData["Error"] = "Đơn này đã xuất hóa đơn điện tử.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        if (order.Status is OrderStatus.Draft or OrderStatus.Cancelled)
+        {
+            TempData["Error"] = "Chỉ xuất HĐĐT cho đơn đã xác nhận (không phải Nháp/Đã hủy).";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        try
+        {
+            var r = await qinvoice.IssueForOrderAsync(order);
+            await orders.UpdateEInvoiceAsync(id, r.Id, r.Series, r.Number, r.Status, r.AuthorityCode);
+            TempData["Success"] = $"Đã xuất HĐĐT {r.Series} số {r.Number} · Mã CQT: {r.AuthorityCode}";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Lỗi xuất HĐĐT (QinvoiceLite có thể đang khởi động ~30s, thử lại): " + ex.Message;
+        }
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
     // GET /Order/Customers
     public async Task<IActionResult> Customers(string? search)
     {

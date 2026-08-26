@@ -1,9 +1,12 @@
 @using MiniDMS.Models.Entities
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
 @model Order
 @{
     ViewData["Title"] = $"Đơn {Model.OrderNo}";
     bool canManage = User.IsInRole("Admin") || User.IsInRole("Sales");
     bool canPay = canManage || User.IsInRole("Accounting");
+    bool canEInv = canPay;
+    var qBase = (Config["QinvoiceLite:BaseUrl"] ?? "https://qinvoicelite.onrender.com").TrimEnd('/');
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -84,6 +87,48 @@
 {
     <div class="alert alert-light border"><i class="bi bi-sticky me-1"></i><strong>Ghi chú:</strong> @Model.Note</div>
 }
+
+<!-- Hóa đơn điện tử -->
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold"><i class="bi bi-receipt-cutoff me-1"></i>Hóa đơn điện tử (TT78)</div>
+    <div class="card-body">
+        @if (Model.EInvoiceId != null)
+        {
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <span class="badge bg-success-subtle text-success border border-success-subtle fs-6"><i class="bi bi-patch-check me-1"></i>Đã xuất HĐĐT</span>
+                <div>
+                    <div><b>@Model.EInvoiceSeries</b> · Số <b>@(Model.EInvoiceNumber?.ToString("D8"))</b></div>
+                    <div class="small text-success">Mã CQT: <span class="font-monospace">@Model.EInvoiceCode</span></div>
+                    <div class="small text-muted">Phát hành @Model.EInvoiceIssuedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                <div class="ms-auto d-flex gap-2">
+                    <a class="btn btn-outline-danger btn-sm" href="@qBase/api/invoices/@Model.EInvoiceId/pdf" target="_blank"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+                    <a class="btn btn-outline-primary btn-sm" href="@qBase/api/invoices/@Model.EInvoiceId/xml" target="_blank"><i class="bi bi-filetype-xml me-1"></i>XML ký số</a>
+                    <a class="btn btn-outline-secondary btn-sm" href="@qBase" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>QinvoiceLite</a>
+                </div>
+            </div>
+        }
+        else if (Model.Status is OrderStatus.Draft or OrderStatus.Cancelled)
+        {
+            <div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Xác nhận đơn trước, sau đó mới xuất được hóa đơn điện tử.</div>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Chưa xuất HĐĐT</span>
+                <div class="small text-muted">Phát hành hóa đơn điện tử qua QinvoiceLite: ký số → gửi CQT → cấp mã.</div>
+                @if (canEInv)
+                {
+                    <form asp-action="ExportEInvoice" asp-route-id="@Model.Id" method="post" class="ms-auto"
+                          onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span>Đang xuất…';">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-primary btn-sm"><i class="bi bi-receipt me-1"></i>Xuất HĐĐT</button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+</div>
 
 <div class="card shadow-sm">
     <div class="card-body d-flex flex-wrap gap-2 align-items-center">
