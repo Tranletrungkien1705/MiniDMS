@@ -105,7 +105,11 @@
                     <a class="btn btn-outline-danger btn-sm" href="@qBase/api/invoices/@Model.EInvoiceId/pdf" target="_blank"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
                     <a class="btn btn-outline-primary btn-sm" href="@qBase/api/invoices/@Model.EInvoiceId/xml" target="_blank"><i class="bi bi-filetype-xml me-1"></i>XML ký số</a>
                     <a class="btn btn-outline-secondary btn-sm" href="@qBase" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>QinvoiceLite</a>
+                    <button class="btn btn-outline-dark btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#pdfPreview"><i class="bi bi-eye me-1"></i>Xem trước</button>
                 </div>
+            </div>
+            <div class="collapse mt-3" id="pdfPreview">
+                <iframe src="@qBase/api/invoices/@Model.EInvoiceId/pdf" style="width:100%;height:560px;border:1px solid #e2e8f0;border-radius:8px" title="Bản thể hiện hóa đơn điện tử"></iframe>
             </div>
         }
         else if (Model.Status is OrderStatus.Draft or OrderStatus.Cancelled)
