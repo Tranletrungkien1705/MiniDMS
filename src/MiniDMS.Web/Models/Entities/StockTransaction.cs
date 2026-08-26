@@ -2,9 +2,10 @@ namespace MiniDMS.Models.Entities;
 
 public enum TransactionType { In, Out, Adjust }
 
-public class StockTransaction
+public class StockTransaction : IOrgOwned
 {
     public int Id { get; set; }
+    public Guid OrgId { get; set; }
     public int ProductId { get; set; }
     public TransactionType Type { get; set; }
     public int Quantity { get; set; }

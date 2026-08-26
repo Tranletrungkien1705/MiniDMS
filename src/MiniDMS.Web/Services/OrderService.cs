@@ -58,7 +58,7 @@ public class OrderService(AppDbContext db, IStockService stock) : IOrderService
 
     public async Task MarkDeliveredAsync(int id, string user)
     {
-        var o = await db.Orders.FindAsync(id) ?? throw new KeyNotFoundException();
+        var o = await db.Orders.FirstOrDefaultAsync(x => x.Id == id) ?? throw new KeyNotFoundException();
         if (o.Status != OrderStatus.Confirmed) throw new InvalidOperationException("Chỉ giao đơn đã xác nhận");
         o.Status = OrderStatus.Delivered;
         await db.SaveChangesAsync();
@@ -76,7 +76,7 @@ public class OrderService(AppDbContext db, IStockService stock) : IOrderService
 
     public async Task CancelAsync(int id, string user)
     {
-        var o = await db.Orders.FindAsync(id) ?? throw new KeyNotFoundException();
+        var o = await db.Orders.FirstOrDefaultAsync(x => x.Id == id) ?? throw new KeyNotFoundException();
         if (o.Status == OrderStatus.Delivered) throw new InvalidOperationException("Không hủy đơn đã giao");
         o.Status = OrderStatus.Cancelled;
         await db.SaveChangesAsync();
@@ -100,7 +100,7 @@ public class OrderService(AppDbContext db, IStockService stock) : IOrderService
 
     public async Task UpdateEInvoiceAsync(int orderId, Guid eid, string series, long? number, string status, string? code)
     {
-        var o = await db.Orders.FindAsync(orderId) ?? throw new KeyNotFoundException();
+        var o = await db.Orders.FirstOrDefaultAsync(x => x.Id == orderId) ?? throw new KeyNotFoundException();
         o.EInvoiceId = eid;
         o.EInvoiceSeries = series;
         o.EInvoiceNumber = number;
@@ -112,7 +112,7 @@ public class OrderService(AppDbContext db, IStockService stock) : IOrderService
 
     public async Task UpdateAccountingAsync(int orderId, string entryNo)
     {
-        var o = await db.Orders.FindAsync(orderId) ?? throw new KeyNotFoundException();
+        var o = await db.Orders.FirstOrDefaultAsync(x => x.Id == orderId) ?? throw new KeyNotFoundException();
         o.AccountingEntryNo = entryNo;
         o.AccountingSyncedAt = DateTime.Now;
         await db.SaveChangesAsync();

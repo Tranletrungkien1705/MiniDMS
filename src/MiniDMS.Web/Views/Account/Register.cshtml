@@ -1,0 +1,62 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng ký doanh nghiệp";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Đăng ký — MiniDMS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  body { background:
+      radial-gradient(800px 460px at 50% -10%, rgba(232,98,10,.20), transparent 60%),
+      radial-gradient(900px 520px at 50% 120%, rgba(28,45,80,.55), transparent 60%), #12192D;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  .login-box { background: #fff; border-radius: 14px; padding: 40px 36px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  .brand { font-size: 28px; font-weight: 800; color: #12192D; }
+  .brand span { color: #E8620A; }
+  .btn-login { background: #E8620A; color: #fff; border: none; padding: 10px; font-weight: 600; }
+  .btn-login:hover { background: #c8540a; color: #fff; }
+</style>
+</head>
+<body>
+<div class="login-box">
+  <div class="brand mb-1">Mini<span>DMS</span></div>
+  <p class="text-muted mb-4" style="font-size:13px">Đăng ký doanh nghiệp — dữ liệu riêng, cô lập</p>
+
+  <form method="post" action="/Account/Register">
+    @Html.AntiForgeryToken()
+    @if (!ViewData.ModelState.IsValid)
+    {
+      <div class="alert alert-danger py-2 px-3 mb-3" style="font-size:13px">
+        @foreach (var e in ViewData.ModelState.Values.SelectMany(v => v.Errors)) { <div>@e.ErrorMessage</div> }
+      </div>
+    }
+
+    <div class="mb-3">
+      <label class="form-label fw-600">Tên doanh nghiệp</label>
+      <input name="companyName" class="form-control" placeholder="VD: Công ty TNHH ABC" required autofocus />
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-600">Email quản trị</label>
+      <input type="email" name="email" class="form-control" placeholder="admin@congty.com" required />
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-600">Mật khẩu</label>
+      <input type="password" name="password" class="form-control" placeholder="Tối thiểu 6 ký tự, có chữ số" required />
+    </div>
+    <button type="submit" class="btn btn-login w-100">Tạo doanh nghiệp & bắt đầu</button>
+  </form>
+
+  <p class="text-center mt-3 mb-0" style="font-size:13px">
+    Đã có tài khoản? <a href="/Account/Login" style="color:#E8620A;font-weight:600">Đăng nhập</a>
+  </p>
+</div>
+</body>
+</html>

@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MiniDMS.Models.Entities;
 
 namespace MiniDMS.Data;
 
 public class DbSeeder(
-    UserManager<IdentityUser> userMgr,
+    UserManager<ApplicationUser> userMgr,
     RoleManager<IdentityRole> roleMgr,
     AppDbContext db)
 {
@@ -13,6 +14,15 @@ public class DbSeeder(
     public async Task SeedAsync()
     {
         await db.Database.EnsureCreatedAsync(); // [local run] tao schema tu model (khong can migration)
+        await MigratePostgresAsync();           // DB cloud cu: them Orgs + cot OrgId neu thieu
+
+        // Org mặc định (dữ liệu + user seed)
+        if (!await db.Orgs.AnyAsync(o => o.Id == TenantContext.DefaultOrgId))
+        {
+            db.Orgs.Add(new Org { Id = TenantContext.DefaultOrgId, Name = "Demo DMS", ApiKey = TenantContext.DefaultApiKey });
+            await db.SaveChangesAsync();
+        }
+
         // Roles
         foreach (var role in Roles)
             if (!await roleMgr.RoleExistsAsync(role))
@@ -73,10 +83,28 @@ public class DbSeeder(
         var user = await userMgr.FindByEmailAsync(email);
         if (user == null)
         {
-            user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
+            user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true, OrgId = TenantContext.DefaultOrgId };
             await userMgr.CreateAsync(user, password);
         }
         if (!await userMgr.IsInRoleAsync(user, role))
             await userMgr.AddToRoleAsync(user, role);
+    }
+
+    /// <summary>DB Postgres cloud cũ: tạo Orgs + thêm cột OrgId (bảng nghiệp vụ + AspNetUsers) nếu thiếu. Idempotent.</summary>
+    private async Task MigratePostgresAsync()
+    {
+        if (!db.Database.IsNpgsql()) return;
+        var def = TenantContext.DefaultOrgId;
+        var tables = new[] { "ProductCategories", "Products", "StockTransactions", "Customers", "Orders", "OrderLines" };
+        var sql = new List<string>
+        {
+            "CREATE TABLE IF NOT EXISTS minidms.\"Orgs\" (\"Id\" uuid PRIMARY KEY, \"Name\" text NOT NULL DEFAULT '', \"ApiKey\" text NOT NULL DEFAULT '', \"CreatedAt\" timestamp NOT NULL DEFAULT now())",
+            "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_Orgs_ApiKey\" ON minidms.\"Orgs\" (\"ApiKey\")",
+            $"ALTER TABLE minidms.\"AspNetUsers\" ADD COLUMN IF NOT EXISTS \"OrgId\" uuid NOT NULL DEFAULT '{def}'",
+        };
+        foreach (var t in tables)
+            sql.Add($"ALTER TABLE minidms.\"{t}\" ADD COLUMN IF NOT EXISTS \"OrgId\" uuid NOT NULL DEFAULT '{def}'");
+        foreach (var s in sql)
+            try { await db.Database.ExecuteSqlRawAsync(s); } catch { }
     }
 }

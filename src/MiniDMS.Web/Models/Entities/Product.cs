@@ -1,8 +1,9 @@
 namespace MiniDMS.Models.Entities;
 
-public class Product
+public class Product : IOrgOwned
 {
     public int Id { get; set; }
+    public Guid OrgId { get; set; }
     public string SKU { get; set; } = "";
     public string Name { get; set; } = "";
     public string? Description { get; set; }
@@ -19,9 +20,10 @@ public class Product
     public ICollection<StockTransaction> Transactions { get; set; } = [];
 }
 
-public class ProductCategory
+public class ProductCategory : IOrgOwned
 {
     public int Id { get; set; }
+    public Guid OrgId { get; set; }
     public string Name { get; set; } = "";
     public string? Code { get; set; }
     public ICollection<Product> Products { get; set; } = [];

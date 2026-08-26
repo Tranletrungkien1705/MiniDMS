@@ -18,7 +18,9 @@ builder.Services.AddDbContext<AppDbContext>(o =>
     else o.UseSqlite(conn);
 });
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(o =>
+builder.Services.AddScoped<MiniDMS.Data.ITenantContext, MiniDMS.Data.TenantContext>();   // multi-tenant
+
+builder.Services.AddIdentity<MiniDMS.Models.Entities.ApplicationUser, IdentityRole>(o =>
 {
     o.Password.RequireDigit = true;
     o.Password.RequiredLength = 6;
@@ -26,6 +28,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(o =>
     o.Password.RequireUppercase = false;
 })
 .AddEntityFrameworkStores<AppDbContext>()
+.AddClaimsPrincipalFactory<MiniDMS.Data.OrgClaimsPrincipalFactory>()   // gắn claim OrgId vào cookie đăng nhập
 .AddDefaultTokenProviders();
 
 builder.Services.ConfigureApplicationCookie(o =>
@@ -66,6 +69,16 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+
+// Multi-tenant: OrgId của request = claim "OrgId" của user đăng nhập. Đặt TRƯỚC khi controller dùng AppDbContext.
+app.Use(async (ctx, next) =>
+{
+    var claim = ctx.User?.FindFirst(MiniDMS.Data.TenantContext.ClaimType)?.Value;
+    if (Guid.TryParse(claim, out var orgId))
+        ctx.RequestServices.GetRequiredService<MiniDMS.Data.ITenantContext>().OrgId = orgId;
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");

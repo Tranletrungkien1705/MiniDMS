@@ -49,7 +49,7 @@ public class ProductService(AppDbContext db) : IProductService
 
     public async Task<bool> DeactivateAsync(int id)
     {
-        var p = await db.Products.FindAsync(id);
+        var p = await db.Products.FirstOrDefaultAsync(x => x.Id == id);
         if (p == null) return false;
         p.IsActive = false;
         await db.SaveChangesAsync();
