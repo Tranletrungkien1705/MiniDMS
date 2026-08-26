@@ -65,12 +65,41 @@ public class OrderController(IOrderService orders, IProductService products) : C
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    // POST /Order/Confirm/5 — trừ kho
+    // POST /Order/Confirm/5 — trừ kho + tự sinh bút toán kế toán
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin,Sales")]
-    public async Task<IActionResult> Confirm(int id)
+    public async Task<IActionResult> Confirm(int id, [FromServices] IMiniAccountingClient accounting)
     {
-        try { await orders.ConfirmAsync(id, User_); TempData["Success"] = "Đã xác nhận đơn và trừ kho."; }
+        try
+        {
+            await orders.ConfirmAsync(id, User_);
+            TempData["Success"] = "Đã xác nhận đơn và trừ kho.";
+            // Tự sinh bút toán kế toán (best-effort — không chặn nếu MiniAccounting đang ngủ).
+            try
+            {
+                var order = await orders.GetByIdAsync(id);
+                if (order is { AccountingEntryNo: null })
+                {
+                    var r = await accounting.PostSaleAsync(order);
+                    await orders.UpdateAccountingAsync(id, r.EntryNo);
+                    TempData["Success"] += $" Đã ghi sổ kế toán ({r.EntryNo}).";
+                }
+            }
+            catch { TempData["Error"] = "Đơn đã xác nhận nhưng chưa đồng bộ kế toán (bấm \"Đồng bộ kế toán\" để thử lại)."; }
+        }
         catch (Exception ex) { TempData["Error"] = ex.Message; }
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // POST /Order/SyncAccounting/5 — đồng bộ kế toán thủ công
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin,Sales,Accounting")]
+    public async Task<IActionResult> SyncAccounting(int id, [FromServices] IMiniAccountingClient accounting)
+    {
+        var order = await orders.GetByIdAsync(id);
+        if (order == null) return NotFound();
+        if (order.AccountingEntryNo != null) { TempData["Error"] = "Đơn đã đồng bộ kế toán."; return RedirectToAction(nameof(Details), new { id }); }
+        if (order.Status is OrderStatus.Draft or OrderStatus.Cancelled) { TempData["Error"] = "Chỉ đồng bộ đơn đã xác nhận."; return RedirectToAction(nameof(Details), new { id }); }
+        try { var r = await accounting.PostSaleAsync(order); await orders.UpdateAccountingAsync(id, r.EntryNo); TempData["Success"] = $"Đã ghi sổ kế toán ({r.EntryNo})."; }
+        catch (Exception ex) { TempData["Error"] = "Lỗi đồng bộ kế toán: " + ex.Message; }
         return RedirectToAction(nameof(Details), new { id });
     }
 

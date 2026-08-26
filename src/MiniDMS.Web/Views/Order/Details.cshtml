@@ -130,6 +130,33 @@
     </div>
 </div>
 
+<!-- Đồng bộ kế toán -->
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold"><i class="bi bi-calculator me-1"></i>Kế toán (MiniAccounting)</div>
+    <div class="card-body d-flex flex-wrap align-items-center gap-3">
+        @if (Model.AccountingEntryNo != null)
+        {
+            <span class="badge bg-success-subtle text-success border border-success-subtle fs-6"><i class="bi bi-journal-check me-1"></i>Đã ghi sổ</span>
+            <div class="small">Bút toán: <b class="font-monospace">@Model.AccountingEntryNo</b>
+                <span class="text-muted">· @Model.AccountingSyncedAt?.ToString("dd/MM/yyyy HH:mm")</span></div>
+            <div class="small text-muted">Nợ 131 / Có 511 + Có 3331 (VAT 10%)</div>
+        }
+        else if (Model.Status is OrderStatus.Draft or OrderStatus.Cancelled)
+        {
+            <div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Xác nhận đơn để tự sinh bút toán kế toán.</div>
+        }
+        else
+        {
+            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Chưa ghi sổ</span>
+            <form asp-action="SyncAccounting" asp-route-id="@Model.Id" method="post" class="ms-auto"
+                  onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span>Đang ghi…';">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-primary btn-sm"><i class="bi bi-journal-plus me-1"></i>Đồng bộ kế toán</button>
+            </form>
+        }
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-body d-flex flex-wrap gap-2 align-items-center">
         @if (canManage && Model.Status == OrderStatus.Draft)

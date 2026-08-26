@@ -38,6 +38,10 @@ public class Order
     public string? EInvoiceStatus { get; set; }    // Draft/Authorized/...
     public DateTime? EInvoiceIssuedAt { get; set; }
 
+    // ── Đồng bộ kế toán (MiniAccounting) ─────────────────────────────
+    public string? AccountingEntryNo { get; set; }   // số bút toán bên MiniAccounting
+    public DateTime? AccountingSyncedAt { get; set; }
+
     public Customer Customer { get; set; } = null!;
     public ICollection<OrderLine> Lines { get; set; } = [];
 }

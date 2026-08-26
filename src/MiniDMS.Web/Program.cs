@@ -35,6 +35,8 @@ builder.Services.AddScoped<DbSeeder>();
 
 // Client HĐĐT (QinvoiceLite). Timeout cao cho cold-start Render free.
 builder.Services.AddHttpClient<IQinvoiceClient, QinvoiceClient>(c => c.Timeout = TimeSpan.FromSeconds(120));
+// Client kế toán (MiniAccounting) — tự sinh bút toán khi xác nhận đơn.
+builder.Services.AddHttpClient<IMiniAccountingClient, MiniAccountingClient>(c => c.Timeout = TimeSpan.FromSeconds(120));
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

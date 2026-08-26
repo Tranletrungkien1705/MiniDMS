@@ -16,6 +16,7 @@ public interface IOrderService
     Task<List<Customer>> GetCustomersAsync(string? search = null);
     Task<int> CreateCustomerAsync(Customer customer);
     Task UpdateEInvoiceAsync(int orderId, Guid eid, string series, long? number, string status, string? code);
+    Task UpdateAccountingAsync(int orderId, string entryNo);
 }
 
 public class OrderService(AppDbContext db, IStockService stock) : IOrderService
@@ -106,6 +107,14 @@ public class OrderService(AppDbContext db, IStockService stock) : IOrderService
         o.EInvoiceStatus = status;
         o.EInvoiceCode = code;
         o.EInvoiceIssuedAt = DateTime.Now;
+        await db.SaveChangesAsync();
+    }
+
+    public async Task UpdateAccountingAsync(int orderId, string entryNo)
+    {
+        var o = await db.Orders.FindAsync(orderId) ?? throw new KeyNotFoundException();
+        o.AccountingEntryNo = entryNo;
+        o.AccountingSyncedAt = DateTime.Now;
         await db.SaveChangesAsync();
     }
 }
