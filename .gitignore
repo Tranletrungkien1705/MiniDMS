@@ -25,3 +25,7 @@ Thumbs.db
 ## Local appsettings (keep appsettings.json, ignore overrides)
 appsettings.*.json
 !appsettings.json
+
+node_modules/
+clientapp/dist/
+src/MiniDMS.Web/clientapp/node_modules/

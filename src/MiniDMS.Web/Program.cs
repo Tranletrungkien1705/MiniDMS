@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MiniDMS.Data;
 using MiniDMS.Services;
+using Serilog;
 
 // Npgsql: DateTime (Kind Local/Unspecified) '' timestamp without time zone (khong phai timestamptz)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+FleetObs.ConfigureLogger("minidms");
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 // Cloud host (Render/Koyeb) cấp cổng qua biến PORT; local mặc định 8080
 builder.WebHost.UseUrls($"http://0.0.0.0:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
 
@@ -49,10 +52,12 @@ builder.Services.AddHttpClient<IQinvoiceClient, QinvoiceClient>(c => c.Timeout =
 // Client kế toán (MiniAccounting) — tự sinh bút toán khi xác nhận đơn.
 builder.Services.AddHttpClient<IMiniAccountingClient, MiniAccountingClient>(c => c.Timeout = TimeSpan.FromSeconds(120));
 
+builder.Services.AddFleetObs();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
+app.UseFleetObs();
 
 // Seed roles + default users on startup
 using (var scope = app.Services.CreateScope())
