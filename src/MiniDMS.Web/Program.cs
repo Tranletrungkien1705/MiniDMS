@@ -51,6 +51,8 @@ builder.Services.AddScoped<DbSeeder>();
 builder.Services.AddHttpClient<IQinvoiceClient, QinvoiceClient>(c => c.Timeout = TimeSpan.FromSeconds(120));
 // Client kế toán (MiniAccounting) — tự sinh bút toán khi xác nhận đơn.
 builder.Services.AddHttpClient<IMiniAccountingClient, MiniAccountingClient>(c => c.Timeout = TimeSpan.FromSeconds(120));
+// Client kho (MiniWMS) — xuất kho khi giao đơn.
+builder.Services.AddHttpClient<IWmsClient, WmsClient>(c => c.Timeout = TimeSpan.FromSeconds(20));
 
 builder.Services.AddFleetObs();
 builder.Services.AddControllersWithViews();

@@ -19,7 +19,7 @@ public interface IOrderService
     Task UpdateAccountingAsync(int orderId, string entryNo);
 }
 
-public class OrderService(AppDbContext db, IStockService stock) : IOrderService
+public class OrderService(AppDbContext db, IStockService stock, IWmsClient wms) : IOrderService
 {
     public Task<List<Order>> GetAllAsync(DateTime? from, DateTime? to, OrderStatus? status)
     {
@@ -58,9 +58,18 @@ public class OrderService(AppDbContext db, IStockService stock) : IOrderService
 
     public async Task MarkDeliveredAsync(int id, string user)
     {
-        var o = await db.Orders.FirstOrDefaultAsync(x => x.Id == id) ?? throw new KeyNotFoundException();
+        var o = await db.Orders.Include(x => x.Customer).Include(x => x.Lines).ThenInclude(l => l.Product)
+            .FirstOrDefaultAsync(x => x.Id == id) ?? throw new KeyNotFoundException();
         if (o.Status != OrderStatus.Confirmed) throw new InvalidOperationException("Chỉ giao đơn đã xác nhận");
         o.Status = OrderStatus.Delivered;
+        // Tích hợp: giao đơn → xuất kho bên MiniWMS theo mã SP (best-effort, không chặn giao đơn).
+        try
+        {
+            var r = await wms.IssueOrderAsync(o);
+            if (r is { Ok: true, DocCode: { } dc })
+                o.Note = ((o.Note ?? "") + $" | Xuất kho WMS {dc} ({r.Warehouse})").Trim(' ', '|');
+        }
+        catch { /* best-effort */ }
         await db.SaveChangesAsync();
     }
 
