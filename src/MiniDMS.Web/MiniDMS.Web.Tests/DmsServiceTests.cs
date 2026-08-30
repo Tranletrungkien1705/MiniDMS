@@ -19,15 +19,21 @@ public class DmsServiceTests
         db.Orgs.Add(new Org { Id = TenantContext.DefaultOrgId, Name = "Demo", ApiKey = "demo" });
         db.SaveChanges();
         var stock = new StockService(db, new ExcelService());
-        return (db, new OrderService(db, stock, new StubWmsClient()), stock, conn);
+        return (db, new OrderService(db, stock, new StubWmsClient(), new StubReconClient()), stock, conn);
     }
 
-    // Xuất kho WMS khi giao đơn là best-effort → test không chạm mạng.
+    // Tích hợp fleet khi giao/xác nhận đơn là best-effort → test không chạm mạng.
     private sealed class StubWmsClient : IWmsClient
     {
         public string BaseUrl => "stub";
         public Task<WmsIssueResult?> IssueOrderAsync(Order order, System.Threading.CancellationToken ct = default)
             => Task.FromResult<WmsIssueResult?>(null);
+    }
+    private sealed class StubReconClient : IReconcileClient
+    {
+        public string BaseUrl => "stub";
+        public Task PostDebtAsync(Order order, Customer? customer, System.Threading.CancellationToken ct = default)
+            => Task.CompletedTask;
     }
 
     private static async Task<(int productId, int customerId)> Seed(AppDbContext db, IStockService stock)

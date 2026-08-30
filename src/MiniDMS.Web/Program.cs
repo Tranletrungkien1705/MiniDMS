@@ -53,6 +53,8 @@ builder.Services.AddHttpClient<IQinvoiceClient, QinvoiceClient>(c => c.Timeout =
 builder.Services.AddHttpClient<IMiniAccountingClient, MiniAccountingClient>(c => c.Timeout = TimeSpan.FromSeconds(120));
 // Client kho (MiniWMS) — xuất kho khi giao đơn.
 builder.Services.AddHttpClient<IWmsClient, WmsClient>(c => c.Timeout = TimeSpan.FromSeconds(20));
+// Client đối soát (MiniReconcile) — đẩy công nợ khi xác nhận đơn.
+builder.Services.AddHttpClient<IReconcileClient, ReconcileClient>(c => c.Timeout = TimeSpan.FromSeconds(20));
 
 builder.Services.AddFleetObs();
 builder.Services.AddControllersWithViews();

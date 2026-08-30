@@ -19,7 +19,7 @@ public interface IOrderService
     Task UpdateAccountingAsync(int orderId, string entryNo);
 }
 
-public class OrderService(AppDbContext db, IStockService stock, IWmsClient wms) : IOrderService
+public class OrderService(AppDbContext db, IStockService stock, IWmsClient wms, IReconcileClient recon) : IOrderService
 {
     public Task<List<Order>> GetAllAsync(DateTime? from, DateTime? to, OrderStatus? status)
     {
@@ -54,6 +54,9 @@ public class OrderService(AppDbContext db, IStockService stock, IWmsClient wms) 
         foreach (var l in o.Lines)
             await stock.StockOutAsync(l.ProductId, l.Quantity, $"Đơn hàng {o.OrderNo}", o.OrderNo, user);
         await db.SaveChangesAsync();
+        // Tích hợp: đẩy công nợ đại lý sang MiniReconcile (best-effort).
+        var cust = await db.Customers.FirstOrDefaultAsync(c => c.Id == o.CustomerId);
+        await recon.PostDebtAsync(o, cust);
     }
 
     public async Task MarkDeliveredAsync(int id, string user)
