@@ -38,6 +38,28 @@ builder.Services.ConfigureApplicationCookie(o =>
 {
     o.LoginPath = "/Account/Login";
     o.AccessDeniedPath = "/Account/AccessDenied";
+    // SPA React gọi /api/v1/* bằng fetch: cookie auth mặc định redirect 302 sang trang Login (HTML),
+    // fetch follow redirect rồi parse HTML as JSON => lỗi câm, SPA hiển thị rỗng thay vì báo chưa đăng nhập.
+    var redirectToLogin = o.Events.OnRedirectToLogin;
+    o.Events.OnRedirectToLogin = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        return redirectToLogin(ctx);
+    };
+    var redirectToAccessDenied = o.Events.OnRedirectToAccessDenied;
+    o.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+        return redirectToAccessDenied(ctx);
+    };
 });
 
 builder.Services.AddScoped<IProductService, ProductService>();
