@@ -115,4 +115,18 @@ app.UseAuthorization();
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapGet("/healthz", () => "ok");
 
+// Nightly backup (fleet-db-backups repo): app free-tier chạy SQLite (không có Postgres ngoài để pg_dump),
+// nên phát nguyên file .db qua endpoint riêng, khoá bằng token so khớp env BACKUP_TOKEN (KHÔNG dùng cookie Identity).
+app.MapGet("/admin/backup/db", (HttpContext ctx) =>
+{
+    var expected = Environment.GetEnvironmentVariable("BACKUP_TOKEN");
+    if (string.IsNullOrEmpty(expected) || ctx.Request.Headers["X-Backup-Token"] != expected)
+        return Results.Unauthorized();
+    if (MiniDMS.Data.DbUtil.IsPostgres(conn))
+        return Results.BadRequest(new { error = "App này dùng Postgres, backup qua pg_dump, không qua endpoint này." });
+    var path = conn.Replace("Data Source=", "", StringComparison.OrdinalIgnoreCase).Trim();
+    if (!File.Exists(path)) return Results.NotFound(new { error = "Không tìm thấy file DB: " + path });
+    return Results.File(File.ReadAllBytes(path), "application/octet-stream", Path.GetFileName(path));
+});
+
 app.Run();
