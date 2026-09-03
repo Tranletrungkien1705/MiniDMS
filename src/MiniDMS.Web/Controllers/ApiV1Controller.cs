@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MiniDMS.Data;
 using MiniDMS.Models.Entities;
 using MiniDMS.Services;
@@ -15,7 +16,7 @@ namespace MiniDMS.Controllers;
 [Route("api/v1")]
 [Authorize]
 [Produces("application/json")]
-public class ApiV1Controller(IOrderService orders, IProductService products, IStockService stock, IReportService report, ICache cache, ITenantContext tenant) : ControllerBase
+public class ApiV1Controller(IOrderService orders, IProductService products, IStockService stock, IReportService report, ICache cache, ITenantContext tenant, AppDbContext db) : ControllerBase
 {
     private string CurrentUser => User.Identity?.Name ?? "api";
 
@@ -112,7 +113,27 @@ public class ApiV1Controller(IOrderService orders, IProductService products, ISt
         var id = await orders.CreateCustomerAsync(new Customer { Name = r.Name.Trim(), Phone = r.Phone, Address = r.Address });
         return Ok(new { id });
     }
+
+    // Import hàng loạt khách hàng thật từ DLS_DealerCustomer (SQL nguồn 2010.HTC) — dedupe theo Code.
+    [HttpPost("import/customers")]
+    public async Task<IActionResult> ImportCustomers([FromBody] List<ImportCustomerReq> rows)
+    {
+        if (rows is null || rows.Count == 0) return BadRequest(new { error = "Không có dữ liệu import." });
+        int added = 0, skipped = 0;
+        foreach (var r in rows)
+        {
+            if (string.IsNullOrWhiteSpace(r.Code) || string.IsNullOrWhiteSpace(r.Name)) { skipped++; continue; }
+            var code = r.Code.Trim();
+            if (await db.Customers.AnyAsync(c => c.Code == code)) { skipped++; continue; }
+            db.Customers.Add(new Customer { Code = code, Name = r.Name.Trim(), Phone = r.Phone, Email = r.Email, Address = r.Address });
+            added++;
+        }
+        await db.SaveChangesAsync();
+        return Ok(new { added, skipped, total = rows.Count });
+    }
 }
+
+public record ImportCustomerReq(string? Code, string? Name, string? Phone, string? Email, string? Address);
 
 public record DashDto(int TotalProducts, int LowStockCount, decimal TodayRevenue, int PendingOrders, List<MonthDto> MonthlySales);
 public record MonthDto(string Label, decimal Value);
