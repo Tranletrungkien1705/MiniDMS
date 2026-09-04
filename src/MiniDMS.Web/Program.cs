@@ -84,6 +84,7 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 app.UseFleetObs();
+FleetObs.ReportLicense(Environment.GetEnvironmentVariable("SSO_AUTHORITY") ?? "https://minisso.onrender.com", "minidms");
 
 // Seed roles + default users on startup
 using (var scope = app.Services.CreateScope())
