@@ -49,6 +49,15 @@ public class OrderService(AppDbContext db, IStockService stock, IWmsClient wms, 
         var o = await db.Orders.Include(o => o.Lines).FirstOrDefaultAsync(o => o.Id == id)
             ?? throw new KeyNotFoundException();
         if (o.Status != OrderStatus.Draft) throw new InvalidOperationException("Chỉ xác nhận đơn ở trạng thái Nháp");
+        // Kiểm tra ĐỦ tồn kho cho TẤT CẢ dòng TRƯỚC KHI trừ bất kỳ dòng nào — StockOutAsync tự SaveChangesAsync()
+        // trên CÙNG DbContext nên nếu trừ dở dang giữa chừng rồi lỗi, sẽ flush luôn Status=Confirmed đã set trước đó
+        // (đã xác nhận bug thật: đơn báo lỗi 400 "tồn kho không đủ" nhưng vẫn bị lưu Confirmed + trừ kho 1 phần).
+        foreach (var l in o.Lines)
+        {
+            var bal = await stock.GetBalanceAsync(l.ProductId);
+            if (bal == null || bal.Balance < l.Quantity)
+                throw new InvalidOperationException($"Tồn kho không đủ cho '{l.Product?.Name ?? l.ProductId.ToString()}' (hiện có: {bal?.Balance ?? 0}, cần {l.Quantity}).");
+        }
         o.Status = OrderStatus.Confirmed;
         // Deduct stock for each line
         foreach (var l in o.Lines)
