@@ -1,0 +1,193 @@
+@using MiniDMS.Models.Entities
+@model Payment
+@{
+    ViewData["Title"] = "Phiếu thanh toán " + Model.PaymentNo;
+    var canAct = User.IsInRole("Admin") || User.IsInRole("Accounting");
+}
+
+@* Nhãn xuất xứ BẮT BUỘC — port 1:1 GetByPaymentNo (PmtPaymentController.cs:7894) + luồng duyệt *@
+<h1 class="h5 mb-3 fw-bold">
+    <i class="bi bi-cash-coin me-2"></i>Phiếu thanh toán @Model.PaymentNo
+    <span class="text-muted fw-normal" style="font-size:13px">(port 1:1 PmtPaymentController — Pmt_Payment)</span>
+</h1>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold small text-uppercase text-muted">Thông tin phiếu</div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-3 text-muted fw-normal">Đại lý</dt><dd class="col-sm-3">@Model.DealerCode</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">Loại thanh toán</dt><dd class="col-sm-3">@Model.PaymentType</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Số tiền</dt>
+                    <dd class="col-sm-3 font-monospace fw-semibold">@Model.TotalAmount.ToString("N0") ₫</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">Trạng thái</dt><dd class="col-sm-3">@Model.PaymentStatus</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Số UNC</dt><dd class="col-sm-3">@Model.BankPaymentNo</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">Loại bảo lãnh</dt><dd class="col-sm-3">@Model.GuaranteeType</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">NH gửi / TK gửi</dt>
+                    <dd class="col-sm-3">@Model.BankCodeSend / @Model.BankAccountSend</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">NH nhận / TK nhận</dt>
+                    <dd class="col-sm-3">@Model.BankCodeReceive / @Model.BankAccountReceive</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Nguồn tiền</dt><dd class="col-sm-3">@Model.Funds</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">NH cho vay</dt><dd class="col-sm-3">@Model.BankLending</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Lãi suất (%/năm)</dt><dd class="col-sm-3">@Model.InterestRate</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">Kỳ hạn (tháng)</dt><dd class="col-sm-3">@Model.LoanPeriod</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Ngày tạo</dt>
+                    <dd class="col-sm-3">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">Ngày tiền về</dt>
+                    <dd class="col-sm-3">@Model.PaymentEndDate?.ToString("dd/MM/yyyy")</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Số chứng từ KT</dt><dd class="col-sm-3">@Model.AccountingRecordNo</dd>
+                    <dt class="col-sm-3 text-muted fw-normal">Người / ngày duyệt</dt>
+                    <dd class="col-sm-3">@Model.ApprovedBy @Model.ApprovedDate?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-3 text-muted fw-normal">Nội dung TT</dt><dd class="col-sm-9">@Model.Remark</dd>
+                    @if (!string.IsNullOrWhiteSpace(Model.RemarkReason))
+                    {
+                        <dt class="col-sm-3 text-muted fw-normal">Lý do hủy/từ chối</dt>
+                        <dd class="col-sm-9 text-danger">@Model.RemarkReason</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold small text-uppercase text-muted">Hành động (POST)</div>
+            <div class="card-body d-grid gap-2">
+                @if (!canAct)
+                {
+                    <div class="text-muted small">Cần vai trò Admin hoặc Accounting.</div>
+                }
+                else
+                {
+                    @* port 1:1 ApproveAHQ — PmtPaymentController.cs:1985. Chỉ phiếu PENDING *@
+                    @if (Model.PaymentStatus == PmtStatus.Pending)
+                    {
+                        <form asp-action="Approve" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button class="btn btn-primary btn-sm w-100"><i class="bi bi-check2-circle me-1"></i>Duyệt</button>
+                        </form>
+
+                        @* port 1:1 RejectHQ — PmtPaymentController.cs:2734. Bắt buộc lý do *@
+                        <form asp-action="Reject" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input name="reason" class="form-control form-control-sm mb-1" placeholder="Lý do từ chối *" required />
+                            <button class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-x-circle me-1"></i>Từ chối</button>
+                        </form>
+                    }
+
+                    @* port 1:1 ConfirmAccountingRecordNoHQ — PmtPaymentController.cs:2901. Chỉ phiếu APPROVE *@
+                    @if (Model.PaymentStatus == PmtStatus.Approve)
+                    {
+                        <form asp-action="ConfirmAccountingRecordNo" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input name="accountingRecordNo" class="form-control form-control-sm mb-1"
+                                   placeholder="Số chứng từ kế toán *" required />
+                            <button class="btn btn-success btn-sm w-100"><i class="bi bi-journal-check me-1"></i>Xác nhận chứng từ</button>
+                        </form>
+                    }
+
+                    @* port 1:1 UndoConfirmHQ — PmtPaymentController.cs:3238. Chỉ phiếu FINISH *@
+                    @if (Model.PaymentStatus == PmtStatus.Finish)
+                    {
+                        <form asp-action="UndoConfirm" method="post" onsubmit="return confirm('Hủy xác nhận phiếu này?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button class="btn btn-outline-warning btn-sm w-100"><i class="bi bi-arrow-counterclockwise me-1"></i>Hủy xác nhận</button>
+                        </form>
+                    }
+
+                    @* port 1:1 CancelHQ — PmtPaymentController.cs:3071. Bắt buộc lý do *@
+                    @if (Model.PaymentStatus != PmtStatus.Cancel && Model.PaymentStatus != PmtStatus.Finish)
+                    {
+                        <form asp-action="Cancel" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input name="reason" class="form-control form-control-sm mb-1" placeholder="Lý do hủy *" required />
+                            <button class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-slash-circle me-1"></i>Hủy phiếu</button>
+                        </form>
+                    }
+                }
+                <a href="/Payment" class="btn btn-link btn-sm">← Về danh sách</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold small text-uppercase text-muted">
+        Chi tiết theo xe — Pmt_PaymentDetail (@Model.Details.Count dòng)
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã xe</th>
+                    <th>VIN</th>
+                    <th>Model / Spec</th>
+                    <th>Màu (ĐH / thực tế)</th>
+                    <th>Số ĐH</th>
+                    <th>Số PLHĐ</th>
+                    <th>Số bảo lãnh</th>
+                    <th>Số BL ngân hàng</th>
+                    <th class="text-end">Giá xe thực tế</th>
+                    <th class="text-end">S.Tiền TT</th>
+                    <th class="text-end">%TT</th>
+                    <th class="text-end">% tích lũy</th>
+                    <th class="text-center">Pháp nhân</th>
+                    <th class="text-center">Đã có LXX</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Details.Count == 0)
+                {
+                    <tr><td colspan="14" class="text-center text-muted py-4">Chưa có dòng chi tiết</td></tr>
+                }
+                @foreach (var d in Model.Details)
+                {
+                    <tr>
+                        <td class="font-monospace small">@d.CarId</td>
+                        <td class="font-monospace small">@d.VIN</td>
+                        <td class="small">@d.ModelCode / @d.SpecCode</td>
+                        <td class="small">@d.ColorCode / @d.VINColorCode</td>
+                        <td class="small">@d.SOCode</td>
+                        <td class="small">@d.DlrCtrNo</td>
+                        <td class="small">
+                            @if (string.IsNullOrWhiteSpace(d.GuaranteeNo))
+                            {
+                                @* GuaranteeNo NULL = thanh toán TTC — PmtPaymentController.cs:12157 *@
+                                <span class="badge bg-light text-dark border">TTC</span>
+                            }
+                            else { @d.GuaranteeNo }
+                        </td>
+                        <td class="small">@d.BankGuaranteeNo</td>
+                        <td class="text-end font-monospace small">@d.UnitPriceActual?.ToString("N0")</td>
+                        <td class="text-end font-monospace small">@d.Amount.ToString("N0")</td>
+                        <td class="text-end font-monospace small">@d.PMT_Percent_Current</td>
+                        <td class="text-end font-monospace small">@d.PMT_Percent_Accum</td>
+                        <td class="text-center small">@d.FlagisHTC</td>
+                        <td class="text-center small">
+                            @if (d.FlagHasDeliveryOrder == "1")
+                            {
+                                @* Cờ cảnh báo khi hủy xác nhận — Pmt_Payment.cs:78 *@
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Có</span>
+                            }
+                            else { <span class="text-muted">—</span> }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

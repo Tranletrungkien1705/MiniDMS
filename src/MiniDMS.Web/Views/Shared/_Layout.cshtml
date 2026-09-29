@@ -76,6 +76,21 @@
                 <i class="bi bi-people"></i> Khách hàng
             </a>
 
+            @* --- Ba màn port 1:1 từ 2023.3.DMS.Sales: MstDealer / MstCarSpec / PmtPayment --- *@
+            <div class="nav-section">Phân phối xe</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dealer" ? "active" : "")"
+               href="/Dealer">
+                <i class="bi bi-shop"></i> Đại lý
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CarSpec" ? "active" : "")"
+               href="/CarSpec">
+                <i class="bi bi-car-front"></i> Phiên bản xe
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Payment" ? "active" : "")"
+               href="/Payment">
+                <i class="bi bi-cash-coin"></i> Thanh toán
+            </a>
+
             <div class="nav-section">Báo cáo</div>
             <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Debt" ? "active" : "")"
                href="/Report/Debt">

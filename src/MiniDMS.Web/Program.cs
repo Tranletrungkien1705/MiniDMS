@@ -67,6 +67,10 @@ builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+// --- Port 1:1 tu 2023.3.DMS.Sales (xem chu thich trong tung service) ---
+builder.Services.AddScoped<IDealerService, DealerService>();     // MstDealerController  -> Mst_Dealer
+builder.Services.AddScoped<ICarSpecService, CarSpecService>();   // MstCarSpecController -> Mst_CarSpec
+builder.Services.AddScoped<IPaymentService, PaymentService>();   // PmtPaymentController -> Pmt_Payment
 builder.Services.AddScoped<DbSeeder>();
 
 // Client HĐĐT (QinvoiceLite). Timeout cao cho cold-start Render free.

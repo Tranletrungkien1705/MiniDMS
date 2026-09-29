@@ -1,0 +1,136 @@
+@using MiniDMS.Models.Entities
+@using MiniDMS.Services
+@model IEnumerable<CarSpec>
+@{
+    ViewData["Title"] = "Phiên bản xe (Spec)";
+    var flagText = (string? v) => v == "1" ? "Có" : "Không";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        @* Nhãn xuất xứ BẮT BUỘC: tên file nguồn + bảng nguồn *@
+        <h1 class="h5 mb-0 fw-bold">
+            <i class="bi bi-car-front me-2"></i>Phiên bản xe (Spec)
+            <span class="text-muted fw-normal" style="font-size:13px">(port 1:1 MstCarSpecController — Mst_CarSpec)</span>
+        </h1>
+        <small class="text-muted">
+            @ViewBag.ItemCount spec · trang @(ViewBag.PageIndex + 1)/@(ViewBag.PageCount == 0 ? 1 : ViewBag.PageCount)
+        </small>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Thêm spec</a>
+    }
+</div>
+
+@* Bộ tìm kiếm port 1:1 Search (MstCarSpecController.cs:44) — đúng 4 điều kiện của nguồn *@
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Mã Spec</label>
+                <input name="specCode" value="@ViewBag.SpecCode" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Mô tả Spec</label>
+                <input name="specDescription" value="@ViewBag.SpecDescription" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Lắp ráp</label>
+                <select name="assemblyStatus" class="form-select form-select-sm">
+                    <option value="">Tất cả</option>
+                    @foreach (var s in CarSpecService.AssemblyStatusValues)
+                    {
+                        <option value="@s" selected="@(ViewBag.AssemblyStatus as string == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Trạng thái</label>
+                <select name="flagActive" class="form-select form-select-sm">
+                    <option value="">Tất cả</option>
+                    <option value="1" selected="@(ViewBag.FlagActive as string == "1")">Hoạt động</option>
+                    <option value="0" selected="@(ViewBag.FlagActive as string == "0")">Ngừng</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã Spec</th>
+                    <th>Mô tả</th>
+                    <th>Model</th>
+                    <th>RootSpec</th>
+                    <th>Grade</th>
+                    <th>OCN</th>
+                    <th>StdOpt</th>
+                    <th class="text-center">Lắp ráp</th>
+                    <th>Xuất xứ</th>
+                    <th class="text-center">Số chỗ</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-center">HĐ nhà máy</th>
+                    <th class="text-center">Cứu thương</th>
+                    <th class="text-center">Trạng thái</th>
+                    @if (User.IsInRole("Admin")) { <th class="text-center">Thao tác</th> }
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="15" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>Không có spec khớp điều kiện
+                    </td></tr>
+                }
+                @foreach (var s in Model)
+                {
+                    <tr class="@(s.FlagActive == "1" ? "" : "table-secondary text-muted")">
+                        <td class="font-monospace fw-semibold small">@s.SpecCode</td>
+                        <td class="small">@s.SpecDescription</td>
+                        <td class="small">@s.ModelCode</td>
+                        <td class="small">@s.RootSpec</td>
+                        <td class="small">@s.GradeCode</td>
+                        <td class="small">@s.OCNCode</td>
+                        <td class="small">@s.StdOptCode</td>
+                        <td class="text-center">
+                            <span class="badge @(s.AssemblyStatus == "CBU" ? "bg-info-subtle text-info border border-info-subtle" : "bg-primary-subtle text-primary border border-primary-subtle")">
+                                @s.AssemblyStatus
+                            </span>
+                        </td>
+                        <td class="small">@s.OriginNo</td>
+                        <td class="text-center small">@s.NumberOfSeats</td>
+                        <td class="text-end font-monospace small">@(s.UnitPrice.HasValue ? s.UnitPrice.Value.ToString("N0") + " ₫" : "")</td>
+                        <td class="text-center small">@flagText(s.FlagInvoiceFactory)</td>
+                        <td class="text-center small">@flagText(s.FlagAmbulance)</td>
+                        <td class="text-center">
+                            @if (s.FlagActive == "1")
+                            { <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span> }
+                            else
+                            { <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Ngừng</span> }
+                        </td>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-outline-primary" title="Sửa"><i class="bi bi-pencil"></i></a>
+                                    <form asp-action="Delete" method="post" onsubmit="return confirm('Xoá spec @s.SpecCode?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="specCode" value="@s.SpecCode" />
+                                        <button type="submit" class="btn btn-outline-danger" title="Xoá"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

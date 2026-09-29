@@ -1,0 +1,19 @@
+@using MiniDMS.Models.Entities
+@model Dealer
+@{ ViewData["Title"] = "Sửa đại lý"; }
+
+@* Nhãn xuất xứ BẮT BUỘC — port 1:1 Update (MstDealerController.cs:2105), bảng Mst_Dealer *@
+<h1 class="h5 mb-3 fw-bold">
+    <i class="bi bi-shop me-2"></i>Sửa đại lý @Model.DealerCode
+    <span class="text-muted fw-normal" style="font-size:13px">(port 1:1 MstDealerController — Mst_Dealer)</span>
+</h1>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(false, "", new { @class = "alert alert-danger py-2 small" })
+    <partial name="_Form" model="Model" />
+    <div class="d-flex gap-2 mb-4">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Cập nhật</button>
+        <a href="/Dealer" class="btn btn-outline-secondary btn-sm">Huỷ</a>
+    </div>
+</form>

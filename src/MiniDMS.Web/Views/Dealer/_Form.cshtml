@@ -1,0 +1,171 @@
+@using MiniDMS.Models.Entities
+@model Dealer
+@*
+    Form nhập Đại lý — 46 cột lưu của Mst_Dealer.
+    Nguồn cột : 12.Dev.Common/idn.DMSSales.Common/Models/DMSSales/Mst_Dealer.cs:10-56
+    Nguồn guard: MstDealerController.cs:1844-1999 (Create) và :2253-2299 (Update)
+    Cờ dùng '1'/'0' — Const.Main.BE.cs:266-274. Trường có dấu * là bắt buộc theo guard nguồn.
+*@
+@{ var isEdit = Model.Id != 0; }
+
+<input type="hidden" asp-for="Id" />
+@if (isEdit) { <input type="hidden" asp-for="DealerCode" /> }
+
+<div asp-validation-summary="All" class="alert alert-danger py-2 small d-none"></div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold small text-uppercase text-muted">Thông tin định danh</div>
+    <div class="card-body row g-3">
+        <div class="col-md-3">
+            <label class="form-label small">Mã đại lý *</label>
+            @* MstDealerController.cs:1844 — bắt buộc; là khoá nên không cho sửa *@
+            <input asp-for="DealerCode" class="form-control form-control-sm" readonly="@isEdit" />
+        </div>
+        <div class="col-md-5">
+            <label class="form-label small">Tên đại lý *</label>
+            @* MstDealerController.cs:1877 (Create) / :2264 (Update) *@
+            <input asp-for="DealerName" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Loại đại lý @(isEdit ? "" : "*")</label>
+            @* MstDealerController.cs:1866 — chỉ Create bắt buộc *@
+            <input asp-for="DealerType" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Mã tỉnh @(isEdit ? "" : "*")</label>
+            @* MstDealerController.cs:1866 — chỉ Create bắt buộc *@
+            <input asp-for="ProvinceCode" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Mã khu vực</label>
+            <input asp-for="AreaCode" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Khu vực cha (MB/MT/MN)</label>
+            <input asp-for="AreaRootCode" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">BUCode</label>
+            <input asp-for="BUCode" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">BUPattern</label>
+            <input asp-for="BUPattern" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Quy mô</label>
+            <input asp-for="DealerScale" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Mã số thuế</label>
+            <input asp-for="TaxCode" class="form-control form-control-sm" />
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold small text-uppercase text-muted">Cờ nghiệp vụ (chỉ nhận '1'/'0')</div>
+    <div class="card-body row g-3">
+        <div class="col-md-2">
+            <label class="form-label small">Đại lý trực tiếp *</label>
+            @* MstDealerController.cs:1888 / :1899 *@
+            <select asp-for="FlagDirect" class="form-select form-select-sm">
+                <option value="1">1 — Có</option><option value="0">0 — Không</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">TCG (xe đã dùng) *</label>
+            @* MstDealerController.cs:1910 / :1921 *@
+            <select asp-for="FlagTCG" class="form-select form-select-sm">
+                <option value="1">1 — Có</option><option value="0">0 — Không</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">LXX tự động *</label>
+            @* MstDealerController.cs:1932 / :1943 *@
+            <select asp-for="FlagAutoLXX" class="form-select form-select-sm">
+                <option value="1">1 — Có</option><option value="0">0 — Không</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">MapVIN tự động *</label>
+            @* MstDealerController.cs:1954 / :1967 *@
+            <select asp-for="FlagAutoMapVIN" class="form-select form-select-sm">
+                <option value="1">1 — Có</option><option value="0">0 — Không</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Duyệt ĐH tự động *</label>
+            @* MstDealerController.cs:1979 / :1989 *@
+            <select asp-for="FlagAutoSOAppr" class="form-select form-select-sm">
+                <option value="1">1 — Có</option><option value="0">0 — Không</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Trạng thái @(isEdit ? "*" : "")</label>
+            @*
+                1:1 QUAN TRỌNG: nguồn KHÔNG cho nhập FlagActive lúc tạo
+                (MstDealerController.cs:2006-2057 không truyền cột này sang biz) — chỉ Update mới đổi được
+                và mới có guard (:2275 / :2287). Vì vậy khi Thêm mới, ô này bị khoá.
+            *@
+            <select asp-for="FlagActive" class="form-select form-select-sm" disabled="@(!isEdit)">
+                <option value="1">1 — Hoạt động</option><option value="0">0 — Ngừng</option>
+            </select>
+            @if (!isEdit)
+            { <small class="text-muted" style="font-size:11px">Nguồn không cho nhập khi tạo → mặc định '1'</small> }
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold small text-uppercase text-muted">Pháp nhân &amp; địa chỉ</div>
+    <div class="card-body row g-3">
+        <div class="col-md-6"><label class="form-label small">Tên công ty</label><input asp-for="CompanyName" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Địa chỉ ĐKKD</label><input asp-for="CompanyAddress" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Địa chỉ showroom</label><input asp-for="ShowroomAddress" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Địa chỉ xưởng dịch vụ</label><input asp-for="GarageAddress" class="form-control form-control-sm" /></div>
+        <div class="col-md-3"><label class="form-label small">Tel đại lý</label><input asp-for="DealerPhoneNo" class="form-control form-control-sm" /></div>
+        <div class="col-md-3"><label class="form-label small">Fax đại lý</label><input asp-for="DealerFaxNo" class="form-control form-control-sm" /></div>
+        <div class="col-md-3"><label class="form-label small">Tel xưởng dịch vụ</label><input asp-for="GaragePhoneNo" class="form-control form-control-sm" /></div>
+        <div class="col-md-3"><label class="form-label small">Fax xưởng dịch vụ</label><input asp-for="GarageFaxNo" class="form-control form-control-sm" /></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold small text-uppercase text-muted">Nhân sự đầu mối</div>
+    <div class="card-body row g-3">
+        <div class="col-md-4"><label class="form-label small">Giám đốc</label><input asp-for="DirectorName" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">Mobile giám đốc</label><input asp-for="DirectorPhoneNo" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">Email giám đốc</label><input asp-for="DirectorEmail" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">TP bán hàng</label><input asp-for="SalesManagerName" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">Mobile TP bán hàng</label><input asp-for="SalesManagerPhoneNo" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">Email TP bán hàng</label><input asp-for="SalesManagerEmail" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">TP dịch vụ</label><input asp-for="GarageManagerName" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">Mobile TP dịch vụ</label><input asp-for="GarageManagerPhoneNo" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">Email TP dịch vụ</label><input asp-for="GarageManagerEmail" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">Người liên lạc</label><input asp-for="ContactName" class="form-control form-control-sm" /></div>
+        <div class="col-md-4"><label class="form-label small">NV HTC phụ trách</label><input asp-for="HTCStaffInCharge" class="form-control form-control-sm" /></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold small text-uppercase text-muted">Người ký hợp đồng / phụ lục</div>
+    <div class="card-body row g-3">
+        <div class="col-md-3"><label class="form-label small">Đại diện ký HĐ</label><input asp-for="Signer" class="form-control form-control-sm" /></div>
+        <div class="col-md-3"><label class="form-label small">Chức vụ đại diện HĐ</label><input asp-for="SignerPosition" class="form-control form-control-sm" /></div>
+        <div class="col-md-3"><label class="form-label small">Đại diện ký PLHĐ</label><input asp-for="CtrNoSigner" class="form-control form-control-sm" /></div>
+        <div class="col-md-3"><label class="form-label small">Chức vụ đại diện PLHĐ</label><input asp-for="CtrNoSignerPosition" class="form-control form-control-sm" /></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold small text-uppercase text-muted">5 dòng địa chỉ in ấn &amp; ghi chú</div>
+    <div class="card-body row g-3">
+        <div class="col-md-6"><label class="form-label small">Địa chỉ 1</label><input asp-for="DealerAddress01" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Địa chỉ 2</label><input asp-for="DealerAddress02" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Địa chỉ 3</label><input asp-for="DealerAddress03" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Địa chỉ 4</label><input asp-for="DealerAddress04" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Địa chỉ 5</label><input asp-for="DealerAddress05" class="form-control form-control-sm" /></div>
+        <div class="col-md-6"><label class="form-label small">Ghi chú</label><input asp-for="Remark" class="form-control form-control-sm" /></div>
+    </div>
+</div>

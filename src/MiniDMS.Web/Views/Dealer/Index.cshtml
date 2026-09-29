@@ -1,0 +1,167 @@
+@using MiniDMS.Models.Entities
+@model IEnumerable<Dealer>
+@{
+    ViewData["Title"] = "Đại lý";
+    var flagText = (string? v) => v == "1" ? "Có" : "Không";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        @* Nhãn xuất xứ BẮT BUỘC: tên file nguồn + bảng nguồn — MstDealerController.cs / Mst_Dealer *@
+        <h1 class="h5 mb-0 fw-bold">
+            <i class="bi bi-shop me-2"></i>Đại lý
+            <span class="text-muted fw-normal" style="font-size:13px">(port 1:1 MstDealerController — Mst_Dealer)</span>
+        </h1>
+        <small class="text-muted">
+            @ViewBag.ItemCount đại lý · trang @(ViewBag.PageIndex + 1)/@(ViewBag.PageCount == 0 ? 1 : ViewBag.PageCount)
+        </small>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Thêm đại lý</a>
+    }
+</div>
+
+@* Bộ tìm kiếm port 1:1 Search (MstDealerController.cs:42): 6 điều kiện, không thêm không bớt *@
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Mã đại lý</label>
+                <input name="dealerCode" value="@ViewBag.DealerCode" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Tên đại lý</label>
+                <input name="dealerName" value="@ViewBag.DealerName" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Trạng thái</label>
+                <select name="flagActive" class="form-select form-select-sm">
+                    <option value="">Tất cả</option>
+                    <option value="1" selected="@(ViewBag.FlagActive as string == "1")">Hoạt động</option>
+                    <option value="0" selected="@(ViewBag.FlagActive as string == "0")">Ngừng</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small text-muted mb-1">LXX tự động</label>
+                <select name="flagAutoLXX" class="form-select form-select-sm">
+                    <option value="">—</option>
+                    <option value="1" selected="@(ViewBag.FlagAutoLXX as string == "1")">Có</option>
+                    <option value="0" selected="@(ViewBag.FlagAutoLXX as string == "0")">Không</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small text-muted mb-1">MapVIN tự động</label>
+                <select name="flagAutoMapVIN" class="form-select form-select-sm">
+                    <option value="">—</option>
+                    <option value="1" selected="@(ViewBag.FlagAutoMapVIN as string == "1")">Có</option>
+                    <option value="0" selected="@(ViewBag.FlagAutoMapVIN as string == "0")">Không</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small text-muted mb-1">Duyệt ĐH tự động</label>
+                <select name="flagAutoSOAppr" class="form-select form-select-sm">
+                    <option value="">—</option>
+                    <option value="1" selected="@(ViewBag.FlagAutoSOAppr as string == "1")">Có</option>
+                    <option value="0" selected="@(ViewBag.FlagAutoSOAppr as string == "0")">Không</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i> Tìm</button>
+                <a href="/Dealer" class="btn btn-outline-secondary btn-sm">Xoá lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã đại lý</th>
+                    <th>Tên đại lý</th>
+                    <th>Loại</th>
+                    <th>Tỉnh</th>
+                    <th>Khu vực</th>
+                    <th>MST</th>
+                    <th class="text-center">Trực tiếp</th>
+                    <th class="text-center">TCG</th>
+                    <th class="text-center">LXX tự động</th>
+                    <th class="text-center">MapVIN tự động</th>
+                    <th class="text-center">Duyệt ĐH tự động</th>
+                    <th class="text-center">Trạng thái</th>
+                    @if (User.IsInRole("Admin")) { <th class="text-center">Thao tác</th> }
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="13" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>Không có đại lý khớp điều kiện
+                    </td></tr>
+                }
+                @foreach (var d in Model)
+                {
+                    <tr class="@(d.FlagActive == "1" ? "" : "table-secondary text-muted")">
+                        <td class="font-monospace fw-semibold small">@d.DealerCode</td>
+                        <td>
+                            <div class="fw-semibold">@d.DealerName</div>
+                            @if (!string.IsNullOrWhiteSpace(d.CompanyName))
+                            { <small class="text-muted">@d.CompanyName</small> }
+                        </td>
+                        <td class="small">@d.DealerType</td>
+                        <td class="small">@d.ProvinceCode</td>
+                        <td class="small">@d.AreaCode @(string.IsNullOrWhiteSpace(d.AreaRootCode) ? "" : $"/ {d.AreaRootCode}")</td>
+                        <td class="font-monospace small">@d.TaxCode</td>
+                        <td class="text-center small">@flagText(d.FlagDirect)</td>
+                        <td class="text-center small">@flagText(d.FlagTCG)</td>
+                        <td class="text-center small">@flagText(d.FlagAutoLXX)</td>
+                        <td class="text-center small">@flagText(d.FlagAutoMapVIN)</td>
+                        <td class="text-center small">@flagText(d.FlagAutoSOAppr)</td>
+                        <td class="text-center">
+                            @if (d.FlagActive == "1")
+                            { <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span> }
+                            else
+                            { <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Ngừng</span> }
+                        </td>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@d.Id" class="btn btn-outline-primary" title="Sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="Delete" method="post"
+                                          onsubmit="return confirm('Xoá đại lý @d.DealerCode?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="dealerCode" value="@d.DealerCode" />
+                                        <button type="submit" class="btn btn-outline-danger" title="Xoá"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@{
+    int pageIndex = ViewBag.PageIndex, pageCount = ViewBag.PageCount, pageSize = ViewBag.PageSize;
+}
+@if (pageCount > 1)
+{
+    <nav class="mt-3">
+        <ul class="pagination pagination-sm mb-0">
+            @for (var i = 0; i < pageCount && i < 20; i++)
+            {
+                <li class="page-item @(i == pageIndex ? "active" : "")">
+                    <a class="page-link"
+                       href="?dealerCode=@ViewBag.DealerCode&dealerName=@ViewBag.DealerName&flagActive=@ViewBag.FlagActive&pageIndex=@i&pageSize=@pageSize">@(i + 1)</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

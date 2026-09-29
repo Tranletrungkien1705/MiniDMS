@@ -1,0 +1,150 @@
+@using MiniDMS.Models.Entities
+@using MiniDMS.Services
+@model IEnumerable<Payment>
+@{
+    ViewData["Title"] = "Thanh toán";
+    var f = (PaymentSearchFilter)ViewBag.Filter;
+    var statusBadge = (string s) => s switch
+    {
+        PmtStatus.Pending => "bg-warning-subtle text-warning border border-warning-subtle",
+        PmtStatus.Approve => "bg-info-subtle text-info border border-info-subtle",
+        PmtStatus.Finish  => "bg-success-subtle text-success border border-success-subtle",
+        PmtStatus.Failed  => "bg-danger-subtle text-danger border border-danger-subtle",
+        PmtStatus.Cancel  => "bg-secondary-subtle text-secondary border border-secondary-subtle",
+        _                 => "bg-light text-dark border"
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        @* Nhãn xuất xứ BẮT BUỘC: tên file nguồn + bảng nguồn *@
+        <h1 class="h5 mb-0 fw-bold">
+            <i class="bi bi-cash-coin me-2"></i>Thanh toán
+            <span class="text-muted fw-normal" style="font-size:13px">(port 1:1 PmtPaymentController — Pmt_Payment)</span>
+        </h1>
+        <small class="text-muted">
+            @ViewBag.ItemCount phiếu · trang @(f.PageIndex + 1)/@(ViewBag.PageCount == 0 ? 1 : ViewBag.PageCount)
+        </small>
+    </div>
+</div>
+
+@*
+    Bộ tìm kiếm port 1:1 Search (PmtPaymentController.cs:7483) — nguồn có 24 tham số.
+    Trang này hiện 12 ô hay dùng nhất; 12 tham số còn lại vẫn nhận qua query-string
+    (PaymentSearchFilter bind [FromQuery]) nên hợp đồng API không bị thu hẹp.
+*@
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Số thanh toán</label>
+                <input name="PaymentNo" value="@f.PaymentNo" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Mã đại lý</label>
+                <input name="DealerCode" value="@f.DealerCode" class="form-control form-control-sm" placeholder="nhiều mã: a,b,c" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Trạng thái</label>
+                <select name="PaymentStatus" class="form-select form-select-sm">
+                    <option value="">Tất cả</option>
+                    @foreach (var s in PmtStatus.All)
+                    { <option value="@s" selected="@(f.PaymentStatus == s)">@s</option> }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">VIN</label>
+                <input name="VIN" value="@f.VIN" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Số UNC</label>
+                <input name="BankPaymentNo" value="@f.BankPaymentNo" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Số chứng từ KT</label>
+                <input name="AccountingRecordNo" value="@f.AccountingRecordNo" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Ngày tạo từ</label>
+                <input name="CreatedDateFrom" type="date" value="@f.CreatedDateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Ngày tạo đến</label>
+                <input name="CreatedDateTo" type="date" value="@f.CreatedDateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Số bảo lãnh</label>
+                <input name="GuaranteeNo" value="@f.GuaranteeNo" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Thanh toán</label>
+                @* PmtPaymentController.cs:12155-12163 — TTC = không có số bảo lãnh; TTBL/LC = có *@
+                <select name="ThanhToan" class="form-select form-select-sm">
+                    <option value="">Tất cả</option>
+                    <option value="TTC" selected="@(f.ThanhToan == "TTC")">TTC</option>
+                    <option value="TTBL/LC" selected="@(f.ThanhToan == "TTBL/LC")">TTBL/LC</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Số PLHĐ</label>
+                <input name="DlrCtrNo" value="@f.DlrCtrNo" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i> Tìm</button>
+                <a href="/Payment" class="btn btn-outline-secondary btn-sm">Xoá lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Số thanh toán</th>
+                    <th>Đại lý</th>
+                    <th>Loại TT</th>
+                    <th class="text-end">Số tiền</th>
+                    <th>Số UNC</th>
+                    <th>NH gửi → nhận</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày tiền về</th>
+                    <th>Số chứng từ KT</th>
+                    <th class="text-center">Số xe</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th class="text-center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="12" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>Không có phiếu thanh toán khớp điều kiện
+                    </td></tr>
+                }
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td class="font-monospace fw-semibold small">@p.PaymentNo</td>
+                        <td class="small">@p.DealerCode</td>
+                        <td class="small">@p.PaymentType</td>
+                        <td class="text-end font-monospace small">@p.TotalAmount.ToString("N0") ₫</td>
+                        <td class="font-monospace small">@p.BankPaymentNo</td>
+                        <td class="small">@p.BankCodeSend → @p.BankCodeReceive</td>
+                        <td class="small">@p.CreatedDate.ToString("dd/MM/yyyy")</td>
+                        <td class="small">@p.PaymentEndDate?.ToString("dd/MM/yyyy")</td>
+                        <td class="font-monospace small">@p.AccountingRecordNo</td>
+                        <td class="text-center small">@p.Details.Count</td>
+                        <td class="text-center"><span class="badge @statusBadge(p.PaymentStatus)">@p.PaymentStatus</span></td>
+                        <td class="text-center">
+                            <a asp-action="Details" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary" title="Xem">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

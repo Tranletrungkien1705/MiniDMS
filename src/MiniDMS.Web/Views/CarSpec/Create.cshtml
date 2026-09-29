@@ -1,0 +1,19 @@
+@using MiniDMS.Models.Entities
+@model CarSpec
+@{ ViewData["Title"] = "Thêm phiên bản xe"; }
+
+@* Nhãn xuất xứ BẮT BUỘC — port 1:1 Create (MstCarSpecController.cs:1577), bảng Mst_CarSpec *@
+<h1 class="h5 mb-3 fw-bold">
+    <i class="bi bi-car-front me-2"></i>Thêm phiên bản xe
+    <span class="text-muted fw-normal" style="font-size:13px">(port 1:1 MstCarSpecController — Mst_CarSpec)</span>
+</h1>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(false, "", new { @class = "alert alert-danger py-2 small" })
+    <partial name="_Form" model="Model" />
+    <div class="d-flex gap-2 mb-4">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Lưu</button>
+        <a href="/CarSpec" class="btn btn-outline-secondary btn-sm">Huỷ</a>
+    </div>
+</form>
